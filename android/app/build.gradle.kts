@@ -31,6 +31,14 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        if (project.hasProperty('FACEBOOK_APP_ID')) {
+            resValue "string", "facebook_app_id", project.properties['FACEBOOK_APP_ID']
+            resValue "string", "fb_login_protocol_scheme", "fb${project.properties['FACEBOOK_APP_ID']}"
+        }
+        if (project.hasProperty('FACEBOOK_CLIENT_TOKEN')) {
+            resValue "string", "facebook_client_token", project.properties['FACEBOOK_CLIENT_TOKEN']
+        }
     }
 
     buildTypes {

@@ -1,4 +1,5 @@
 import 'package:attune/core/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -23,7 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-
+  
+  // Handles
   void _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
@@ -45,6 +47,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al iniciar sesión: $e')),
+        );
+      }
+    }
+  }
+
+  void _handleFacebookSignIn() async {
+    setState(() {
+      _isLoading = false;
+    });
+
+    try {
+      final userCredential = await _authService.signInWithFacebook();
+
+      if(userCredential == null && mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
+    } catch (e) {
+      if(mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al iniciar sesión con Facebook: $e')),
         );
       }
     }
@@ -153,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Login with Facebook
                     OutlinedButton.icon(
                       // Si está cargando, deshabilitamos el botón
-                      onPressed: _isLoading ? null : () { /* TODO: Facebook */ },
+                      onPressed: _isLoading ? null : _handleFacebookSignIn,
                       icon: const FaIcon(FontAwesomeIcons.facebook, color: Colors.blue),
                       label: const Text('Ingresar con Facebook'),
                       style: OutlinedButton.styleFrom(

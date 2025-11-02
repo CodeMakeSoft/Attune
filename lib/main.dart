@@ -1,44 +1,101 @@
-// Importa el paquete de Material Design, que contiene los widgets visuales.
 import 'package:flutter/material.dart';
+import 'package:attune/app/auth_gate.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-// La función `main` es el punto de entrada de toda app de Flutter.
-void main() {
-  // `runApp` infla el widget que le pasas y lo adjunta a la pantalla.
+// Keys for Firestone
+import 'firebase_options.dart';
+
+// Colors
+import 'package:attune/utils/app_colors.dart';
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
-// MyApp es el widget raíz de tu aplicación.
-// Es "Stateless" porque su estado no cambia con el tiempo.
+
 class MyApp extends StatelessWidget {
-  // El constructor del widget.
   const MyApp({super.key});
 
-  // El método `build` describe cómo mostrar el widget.
-  // Es llamado por el framework de Flutter cada vez que necesita dibujar el widget.
   @override
   Widget build(BuildContext context) {
-    // `MaterialApp` es un widget que envuelve varias funcionalidades y widgets
-    // que son comúnmente requeridos, como la navegación y los temas.
     return MaterialApp(
+      title: 'Attune',
       debugShowCheckedModeBanner: false,
-      // El título de la aplicación, usado por el sistema operativo.
-      title: 'Hola Mundo App',
-      // La "home" es la primera pantalla que el usuario verá.
-      home: Scaffold(
-        // `AppBar` es la barra de título que aparece en la parte superior.
-        appBar: AppBar(
-          title: const Text('Mi Primera App'),
-          backgroundColor: Colors.blueGrey, // Un color para la barra
+      
+      // --- AQUÍ ESTÁ LA MAGIA ---
+      // Vamos a definir el tema global de la app
+      theme: ThemeData(
+        // 1. Color de fondo principal para todas las pantallas
+        scaffoldBackgroundColor: AppColors.backgroundPrimary,
+        
+        // 2. El esquema de color (el más importante)
+        colorScheme: ColorScheme(
+          brightness: Brightness.light, // Modo claro
+          
+          primary: AppColors.accentPrimary,    // Tu color principal (voidNavy)
+          onPrimary: AppColors.contentInverse,  // Texto sobre el color primario (blanco)
+          
+          secondary: AppColors.accentSecondary, // Tu color secundario (laserTeal)
+          onSecondary: AppColors.contentPrimary, // Texto sobre el color secundario
+          
+          error: AppColors.stateError,      // Rojo para errores
+          onError: AppColors.contentInverse,  // Texto sobre el color de error
+          
+          surface: AppColors.backgroundPrimary,      // Fondo principal
+          onSurface: AppColors.contentPrimary,     // Texto sobre el fondo
+
+          inverseSurface: AppColors.backgroundSubtle, // Fondo de tarjetas/campos
+          onInverseSurface: AppColors.contentPrimary, // Texto sobre tarjetas
         ),
-        // `body` es el contenido principal de la pantalla.
-        body: const Center(
-          // `Center` es un widget que centra a su widget hijo.
-          child: Text(
-            '¡Hola, mundo!',
-            style: TextStyle(fontSize: 36), // Le damos un tamaño de fuente
+
+        // 3. Tema por defecto para las AppBars
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.backgroundPrimary, // Fondo de la barra
+          foregroundColor: AppColors.contentPrimary,   // Color del título
+          elevation: 0, // Sin sombra, para un look limpio
+          centerTitle: true,
+        ),
+        
+        // 4. Tema por defecto para los Campos de Texto
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.backgroundSubtle,
+          labelStyle: const TextStyle(color: AppColors.contentSecondary),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.borderDefault),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.borderDefault),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.accentPrimary, width: 2.0),
+          ),
+        ),
+
+        // 5. Tema por defecto para Botones Elevados
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accentPrimary, // Fondo del botón
+            foregroundColor: AppColors.contentInverse, // Color del texto
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
       ),
+      // -----------------------------
+      
+      home: const AuthGate(), // Esto sigue igual
     );
   }
 }

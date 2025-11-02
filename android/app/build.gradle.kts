@@ -1,10 +1,16 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
+    id("com.google.gms.google-services") // FlutterFire
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -23,28 +29,36 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.attune"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        if (project.hasProperty('FACEBOOK_APP_ID')) {
-            resValue "string", "facebook_app_id", project.properties['FACEBOOK_APP_ID']
-            resValue "string", "fb_login_protocol_scheme", "fb${project.properties['FACEBOOK_APP_ID']}"
+        if (keystoreProperties.containsKey("FACEBOOK_APP_ID")) {
+            resValue(
+                "string",
+                "facebook_app_id",
+                keystoreProperties.getProperty("FACEBOOK_APP_ID")
+            )
+            resValue(
+                "string",
+                "fb_login_protocol_scheme",
+                "fb${keystoreProperties.getProperty("FACEBOOK_APP_ID")}"
+            )
         }
-        if (project.hasProperty('FACEBOOK_CLIENT_TOKEN')) {
-            resValue "string", "facebook_client_token", project.properties['FACEBOOK_CLIENT_TOKEN']
+
+        if (keystoreProperties.containsKey("FACEBOOK_CLIENT_TOKEN")) {
+            resValue(
+                "string",
+                "facebook_client_token",
+                keystoreProperties.getProperty("FACEBOOK_CLIENT_TOKEN")
+            )
         }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }

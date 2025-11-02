@@ -137,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // --- 5. Conectamos nuestra función al botón ---
+                    // Login With Google
                     OutlinedButton.icon(
                       // Si está cargando, deshabilitamos el botón (onPressed: null)
                       onPressed: _isLoading ? null : _handleGoogleSignIn,
@@ -150,6 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
 
+                    // Login with Facebook
                     OutlinedButton.icon(
                       // Si está cargando, deshabilitamos el botón
                       onPressed: _isLoading ? null : () { /* TODO: Facebook */ },
@@ -169,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Si _isLoading es true, muestra un 'loading' semitransparente
             if (_isLoading)
               Container(
-                color: Colors.black.withOpacity(0.5),
+                color: const Color.fromRGBO(0, 0, 0, 0.5),
                 child: const Center(
                   child: CircularProgressIndicator(),
                 ),

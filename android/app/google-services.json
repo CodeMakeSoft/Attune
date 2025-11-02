@@ -12,7 +12,20 @@
           "package_name": "com.example.attune"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "677724530633-38lu6manmq551krh9l5vvd285pvber07.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.attune",
+            "certificate_hash": "49991822b8785902cac584266bfb9bc1e240f094"
+          }
+        },
+        {
+          "client_id": "677724530633-grsf2hf3pmbqvl98bq5ooktp5laaoq95.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCclChe6TR5f5WfwZPw7zGBKjw_bizADwk"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "677724530633-grsf2hf3pmbqvl98bq5ooktp5laaoq95.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "677724530633-5fsqie88shhht434i9sq3c7gcckvfs1v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.attune"
+              }
+            }
+          ]
         }
       }
     }

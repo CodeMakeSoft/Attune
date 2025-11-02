@@ -58,6 +58,39 @@ class AuthService {
     }
   }
 
+    // Register and SignIn with email
+  Future<UserCredential?> registerWithEmailPassword(String email, String password) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email, 
+        password: password,
+      );
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      log('Error in register: ${e.code}', name: 'AuthService');
+      return null;
+    } catch (e) {
+      log('Error in register: $e', name: 'AuthService');
+      return null;
+    }
+  }
+  
+  Future<UserCredential?> signInWithEmailPassword(String email, String password) async {
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email, 
+        password: password,
+      );
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      log('Error in Sign In: ${e.code}', name: 'AuthService');
+      return null;
+    } catch (e) {
+      log('Error in Sign In: $e', name: 'AuthService');
+      return null;
+    }
+  }
+
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await FacebookAuth.instance.logOut();

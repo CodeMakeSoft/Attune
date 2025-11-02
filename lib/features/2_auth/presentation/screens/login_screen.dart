@@ -77,6 +77,48 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleEmailSignIn() async {
+    if(_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa correo y contraseña'))
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await _authService.signInWithEmailPassword(
+        _emailController.text.trim(), 
+        _passwordController.text.trim(),
+      );
+
+      if(userCredential == null && mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: Usuario o contraseña incorrectos.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if(mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -136,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     ElevatedButton(
-                      onPressed: () { /* TODO */ },
+                      onPressed: _isLoading ? null : _handleEmailSignIn,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),

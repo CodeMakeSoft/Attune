@@ -91,6 +91,21 @@ class AuthService {
     }
   }
 
+  // Forgot passwoord
+  Future<bool> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+
+      return true;
+    } on FirebaseAuthException catch (e) {
+      log('Error al enviar correo de restablecimiento: ${e.code}', name: 'AuthService');
+      return false;
+    } catch (e) {
+      log('Error: $e', name: 'AuthService');
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await FacebookAuth.instance.logOut();

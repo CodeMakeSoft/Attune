@@ -150,7 +150,44 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: No se pudo enviar el correo. Verifica que el correo sea correcto.')),
         );
+        return;
       }
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final userCredential = await _authService.registerWithEmailPassword(
+          _emailController.text.trim(), 
+          _passwordController.text.trim(),
+        );
+
+        if(userCredential == null && mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: El email ya está en uso o la contraseña es muy débil.')),
+          );
+        }
+      } catch (e) {
+        if(mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  void _handleRegistration() async {
+    if(_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa correo y contraseña para registrarte.')),
+      );
     }
   }
 
@@ -280,6 +317,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           foregroundColor: colorScheme.onSurface,
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '¿No tienes una cuenta?',
+                            style: textTheme.bodyMedium,
+                          ),
+                          TextButton(
+                            onPressed: _isLoading ? null : _handleRegistration, 
+                            child: const Text('Registrate'),
+                          ),
+                        ],
                       ),
                     ],
                   ),

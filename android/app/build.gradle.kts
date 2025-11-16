@@ -36,26 +36,17 @@ android {
         versionName = flutter.versionName
 
         if (keystoreProperties.containsKey("FACEBOOK_APP_ID")) {
-            resValue(
-                "string",
-                "facebook_app_id",
-                keystoreProperties.getProperty("FACEBOOK_APP_ID")
-            )
-            resValue(
-                "string",
-                "fb_login_protocol_scheme",
-                "fb${keystoreProperties.getProperty("FACEBOOK_APP_ID")}"
-            )
+            resValue("string", "facebook_app_id", keystoreProperties.getProperty("FACEBOOK_APP_ID"))
+            resValue("string", "fb_login_protocol_scheme", "fb${keystoreProperties.getProperty("FACEBOOK_APP_ID")}")
         }
 
         if (keystoreProperties.containsKey("FACEBOOK_CLIENT_TOKEN")) {
-            resValue(
-                "string",
-                "facebook_client_token",
-                keystoreProperties.getProperty("FACEBOOK_CLIENT_TOKEN")
-            )
+            resValue("string", "facebook_client_token", keystoreProperties.getProperty("FACEBOOK_CLIENT_TOKEN"))
         }
+
+        manifestPlaceholders["facebook_app_id"] = keystoreProperties.getProperty("FACEBOOK_APP_ID") ?: ""
     }
+
 
     buildTypes {
         release {

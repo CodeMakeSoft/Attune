@@ -1,12 +1,60 @@
+import 'package:attune/features/3_dashboard/presentation/widgets/dashboard_grid_button.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UserDashboardView extends StatelessWidget {
   const UserDashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Hola, Usuario (Aquí va tu grid)'),
+    return GridView.count(
+      crossAxisCount: 2,
+      padding: const EdgeInsets.all(16.0),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      children: [
+        // Basado en tu mockup "¡Hola User!"
+        DashboardGridButton(
+          icon: FontAwesomeIcons.solidUser,
+          label: 'Mi Perfil',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.fileInvoiceDollar, // Finanzas
+          label: 'Finanzas',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.solidCalendarCheck, // Asistencia
+          label: 'Asistencia',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.filePen, // Permisos (Solicitar)
+          label: 'Solicitar Permiso',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.chartSimple, // Desempeño
+          label: 'Mi Desempeño',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.umbrellaBeach, // Prestaciones
+          label: 'Prestaciones',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.calendarWeek,
+          label: 'Eventos',
+          onPressed: () { /* TODO */ },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.solidCircleQuestion,
+          label: 'Soporte',
+          onPressed: () { /* TODO */ },
+        ),
+      ],
     );
   }
 }

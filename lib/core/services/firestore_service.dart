@@ -10,7 +10,6 @@ class FirestoreService {
   final fbAuth.FirebaseAuth _auth = fbAuth.FirebaseAuth.instance;
 
   Future<User?> getUserData() async {
-    // 1. Obtener el usuario actual de Auth
     final fbAuth.User? authUser = _auth.currentUser;
     if (authUser == null) return null;
 
@@ -79,7 +78,7 @@ class FirestoreService {
           'name': authUser.displayName ?? 'Nuevo Admin',
           'photoUrl': authUser.photoURL,
           'role': 'super_admin', // Asignamos el rol
-          'companyId': '',         // ¡AÚN NO TIENE EMPRESA!
+          'companyId': '',     
           'status': 'pending_company',
           'createdAt': FieldValue.serverTimestamp(),
           'emergencyContact': {},
@@ -93,7 +92,6 @@ class FirestoreService {
     }
   }
 
-  // ... (tu método createCompany)
   Future<bool> createCompany({
     required String companyName,
     String? rfc,
@@ -126,6 +124,50 @@ class FirestoreService {
       return true;
     } catch (e) {
       log('Error al crear la empresa: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  Future<bool> inviteUser({
+    required String email,
+    required String role, 
+  }) async {
+    try {
+      // 1. Obtenemos los datos del usuario actual (el que invita)
+      final User? currentUser = await getUserData();
+      
+      if (currentUser == null || currentUser.companyId.isEmpty) {
+        log('Error: No se puede invitar sin estar en una empresa.', name: 'FirestoreService');
+        return false;
+      }
+
+      // 2. Referencia al documento (Usamos el email del INVITADO)
+      // CORRECCIÓN 1: Usamos 'email' (el parámetro), no 'authUser'.
+      final emailKey = email.trim().toLowerCase(); 
+      
+      // CORRECCIÓN 2: Usamos un nombre consistente para la referencia
+      final invitationRef = _db.collection('invitations').doc(emailKey);
+
+      // (Opcional: Podrías revisar si ya existe con 'get()', pero 'set()' lo sobrescribe, lo cual también es válido para reenviar invitación)
+
+      // 3. Datos de la invitación
+      final invitationData = {
+        'email': emailKey, // Guardamos el email ya limpio
+        'companyId': currentUser.companyId, 
+        'role': role,
+        'invitedBy': currentUser.uid, 
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // 4. Guardar en Firestore
+      await invitationRef.set(invitationData); // Ahora sí usa la variable correcta
+      
+      log('Invitación enviada a $emailKey', name: 'FirestoreService');
+      return true;
+
+    } catch (e) {
+      log('Error al invitar usuario: $e', name: 'FirestoreService');
       return false;
     }
   }

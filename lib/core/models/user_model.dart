@@ -4,8 +4,15 @@ class User {
   // Autentication data
   final String uid;
   final String email;
-  final String companyId;
-  final String role;
+  
+  // Multi-Company Architecture
+  // Clave: companyId
+  // Valor: { 'role': 'admin', 'name': 'Tech Solutions' }
+  final Map<String, dynamic> companies; 
+  
+  final List<String> ownedCompanies;
+  final String currentCompanyId;
+  
   final String status;
   final Timestamp createdAt;
 
@@ -27,57 +34,95 @@ class User {
   final String? curp;
   final String? nss;
 
+  // --- Getters de Compatibilidad ---
+  String get companyId => currentCompanyId;
+  
+  String get role {
+    if (currentCompanyId.isEmpty) return 'user';
+    
+    final companyData = companies[currentCompanyId];
+    if (companyData == null) return 'user';
+    
+    // Soporte híbrido: Si es String (viejo) o Map (nuevo)
+    if (companyData is String) return companyData;
+    if (companyData is Map) return companyData['role'] ?? 'user';
+    
+    return 'user';
+  }
+  
+  // Nuevo getter para obtener el nombre de la empresa actual
+  String get currentCompanyName {
+    if (currentCompanyId.isEmpty) return '';
+    final companyData = companies[currentCompanyId];
+    if (companyData is Map) return companyData['name'] ?? '';
+    return '';
+  }
+
   const User({
     required this.uid,
     required this.email,
-    required this.companyId,
-    required this.role,
+    required this.companies,
+    required this.ownedCompanies,
+    required this.currentCompanyId,
     required this.status,
     required this.createdAt,
-    // Editables
     required this.name,
     this.photoUrl,
     this.birthday,
     this.gender,
     required this.emergencyContact,
-    // Admin
     this.department,
     this.position,
     this.contractType,
     this.hireDate,
-    // Legal
     this.rfc,
     this.curp,
     this.nss,
   });
 
-  // Firestone constructor
   factory User.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    // Manejo robusto del mapa de compañías
+    Map<String, dynamic> companiesMap = {};
+    
+    if (data['companies'] != null) {
+      companiesMap = Map<String, dynamic>.from(data['companies']);
+    } else if (data['companyId'] != null && data['companyId'].toString().isNotEmpty) {
+      // Migración legacy
+      companiesMap[data['companyId']] = {
+        'role': data['role'] ?? 'user',
+        'name': 'Empresa (Sin nombre)' // Placeholder para datos viejos
+      };
+    }
+
+    List<String> ownedList = [];
+    if (data['ownedCompanies'] != null) {
+      ownedList = List<String>.from(data['ownedCompanies']);
+    }
 
     return User(
       uid: doc.id,
       email: data['email'] ?? '',
-      companyId: data['companyId'] ?? '',
-      role: data['role'] ?? 'user',
+      
+      companies: companiesMap,
+      ownedCompanies: ownedList,
+      currentCompanyId: data['currentCompanyId'] ?? (companiesMap.isNotEmpty ? companiesMap.keys.first : ''),
+      
       status: data['status'] ?? 'pending',
       createdAt: data['createdAt'] ?? Timestamp.now(),
 
-      // Info Personal
       name: data['name'] ?? '',
       photoUrl: data['photoUrl'],
       birthday: data['birthday'],
       gender: data['gender'],
-      // Hacemos un 'cast' seguro del mapa
       emergencyContact: Map<String, String>.from(data['emergencyContact'] ?? {}),
 
-      // Info Laboral
       department: data['department'],
       position: data['position'],
       contractType: data['contractType'],
       hireDate: data['hireDate'],
 
-      // Info Legal
       rfc: data['rfc'],
       curp: data['curp'],
       nss: data['nss'],
@@ -90,27 +135,21 @@ class User {
     Timestamp? birthday,
     String? gender,
     Map<String, String>? emergencyContact,
+    String? currentCompanyId,
   }) {
     return User(
-      // --- Grupo 1 (SIN 'this.') ---
-      // 'this.' es innecesario porque no hay ambigüedad
       uid: uid,
       email: email,
-      companyId: companyId,
-      role: role,
+      companies: companies,
+      ownedCompanies: ownedCompanies,
+      currentCompanyId: currentCompanyId ?? this.currentCompanyId,
       status: status,
       createdAt: createdAt,
-      
-      // --- Grupo 2 (CON 'this.') ---
-      // 'this.' ES OBLIGATORIO para diferenciar
-      // el parámetro 'name' del miembro de la clase 'this.name'
       name: name ?? this.name,
       photoUrl: photoUrl ?? this.photoUrl,
       birthday: birthday ?? this.birthday,
       gender: gender ?? this.gender,
       emergencyContact: emergencyContact ?? this.emergencyContact,
-
-      // --- Grupo 1 (SIN 'this.') ---
       department: department,
       position: position,
       contractType: contractType,

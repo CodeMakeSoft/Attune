@@ -98,6 +98,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         return Scaffold(
           appBar: AppBar(
+            // Botón de Empresas a la izquierda
+            leading: IconButton(
+              icon: const Icon(Icons.business),
+              tooltip: 'Mis Empresas',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => SimpleDialog(
+                    title: const Text('Selecciona una Empresa'),
+                    children: appUser.companies.entries.map((entry) {
+                      final companyId = entry.key;
+                      final companyData = entry.value;
+                      final isSelected = companyId == appUser.currentCompanyId;
+                      
+                      // Extraer nombre y rol de forma segura
+                      String companyName = 'Empresa (Sin nombre)';
+                      String role = 'user';
+
+                      if (companyData is Map) {
+                        companyName = companyData['name'] ?? 'Empresa (Sin nombre)';
+                        role = companyData['role'] ?? 'user';
+                      } else if (companyData is String) {
+                        // Soporte legacy
+                        role = companyData;
+                      }
+
+                      return SimpleDialogOption(
+                        onPressed: () async {
+                          Navigator.pop(context); // Cerrar diálogo
+                          
+                          if (!isSelected) {
+                            // Cambiar empresa
+                            await _firestoreService.switchCompany(companyId);
+                            _loadUserData(); // Recargar Dashboard
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                                color: isSelected ? Theme.of(context).primaryColor : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      companyName, 
+                                      style: TextStyle(
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Rol: $role',
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
             title: Text('Hola, ${appUser.name}'),
             actions: [
               IconButton(

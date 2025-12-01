@@ -13,70 +13,110 @@ class FirestoreService {
     final fbAuth.User? authUser = _auth.currentUser;
     if (authUser == null) return null;
 
-    // 2. Intentar leer el documento del usuario en Firestore (en /users/{uid})
     final userDocRef = _db.collection('users').doc(authUser.uid);
     var userDocSnapshot = await userDocRef.get();
 
+    // --- 1. USUARIO EXISTENTE ---
     if (userDocSnapshot.exists) {
       log('Usuario existente encontrado.', name: 'FirestoreService');
-      return User.fromFirestore(userDocSnapshot);
-    } else {
-      
-      // 4. Busca en la colección 'invitations' usando el email como ID
+      User user = User.fromFirestore(userDocSnapshot);
+
+      // Revisar si hay invitaciones pendientes para este usuario existente
       final invitationDocRef = _db.collection('invitations').doc(authUser.email!);
       final invitationDocSnapshot = await invitationDocRef.get();
 
       if (invitationDocSnapshot.exists) {
-        // 4.1 ¡ENCONTRÓ UNA INVITACIÓN!
-        // Esto es un Admin o User invitado.
-        log('Invitación encontrada. Vinculando cuenta...', name: 'FirestoreService');
+        log('Invitación encontrada para usuario existente. Procesando...', name: 'FirestoreService');
+        final invitationData = invitationDocSnapshot.data()!;
+        final newCompanyId = invitationData['companyId'];
+        final newRole = invitationData['role'];
+
+        // --- VALIDACIÓN DE LÍMITES ---
+        // Super Admin: Max 20 empresas.
+        // User/Admin: Max 5 empresas.
+        // Nota: Usamos una lógica simple para determinar si es "Super Admin" globalmente:
+        // Si tiene al menos una empresa propia, es Super Admin.
+        bool isSuperAdmin = user.ownedCompanies.isNotEmpty; 
+        int limit = isSuperAdmin ? 20 : 5;
+
+        if (user.companies.length < limit) {
+          final batch = _db.batch();
+          
+          // Agregamos la nueva empresa al mapa
+          // Nota: Usamos notación de punto para actualizar campos anidados en mapas de Firestore
+          batch.update(userDocRef, {
+            'companies.$newCompanyId': newRole,
+            // Opcional: ¿Cambiamos el foco a la nueva empresa?
+            // 'currentCompanyId': newCompanyId, 
+          });
+          
+          batch.delete(invitationDocRef);
+          await batch.commit();
+          
+          log('Invitación aceptada automáticamente. Nueva empresa agregada.', name: 'FirestoreService');
+          
+          userDocSnapshot = await userDocRef.get();
+          return User.fromFirestore(userDocSnapshot);
+        } else {
+          log('Límite de empresas alcanzado ($limit). No se procesó la invitación.', name: 'FirestoreService');
+        }
+      }
+
+      return user;
+    } 
+    
+    // --- 2. USUARIO NUEVO ---
+    else {
+      final invitationDocRef = _db.collection('invitations').doc(authUser.email!);
+      final invitationDocSnapshot = await invitationDocRef.get();
+
+      if (invitationDocSnapshot.exists) {
+        // 2.1 NUEVO USUARIO INVITADO
+        log('Invitación encontrada para usuario NUEVO.', name: 'FirestoreService');
         final invitationData = invitationDocSnapshot.data()!;
         
-        // Preparamos los datos del nuevo usuario
         final newUserData = {
-          // Datos de la invitación
-          'companyId': invitationData['companyId'],
-          'role': invitationData['role'],
-          // Datos de Auth
           'email': authUser.email,
-          'name': authUser.displayName ?? '', // Tomamos los datos de Google/FB
+          'name': authUser.displayName ?? '',
           'photoUrl': authUser.photoURL,
-          'status': 'active', // Activamos la cuenta
+          'status': 'active',
           'createdAt': FieldValue.serverTimestamp(),
-          // Campos vacíos para que los llene después
           'emergencyContact': {},
+          
+          // Estructura Multi-Empresa
+          'companies': {
+            invitationData['companyId']: {
+              'role': invitationData['role'],
+              'name': invitationData['companyName'] ?? 'Empresa Invitada'
+            }
+          },
+          'ownedCompanies': [],
+          'currentCompanyId': invitationData['companyId'],
         };
 
-        // Usamos un WriteBatch para hacer dos cosas a la vez:
         final batch = _db.batch();
-        
-        // Operación 1: CREAR el documento de usuario en /users/{uid}
         batch.set(userDocRef, newUserData);
-        
-        // Operación 2: BORRAR la invitación
         batch.delete(invitationDocRef);
-        
-        // Ejecutamos las dos operaciones
         await batch.commit();
         
-        // Volvemos a leer el documento de usuario que acabamos de crear y lo devolvemos
         userDocSnapshot = await userDocRef.get();
         return User.fromFirestore(userDocSnapshot);
 
       } else {
-        // 4.2 NO HAY INVITACIÓN: Es un usuario 100% nuevo.
-        // Este DEBE SER un Super Admin registrando su empresa.
-        log('Usuario no invitado encontrado, creando perfil de Super Admin...', name: 'FirestoreService');
+        // 2.2 NUEVO SUPER ADMIN
+        log('Usuario nuevo sin invitación. Creando perfil Super Admin...', name: 'FirestoreService');
         
         final newUserData = {
           'email': authUser.email,
           'name': authUser.displayName ?? 'Nuevo Admin',
           'photoUrl': authUser.photoURL,
-          'role': 'super_admin', // Asignamos el rol
-          'companyId': '',     
           'status': 'pending_company',
           'createdAt': FieldValue.serverTimestamp(),
           'emergencyContact': {},
+          
+          'companies': {},
+          'ownedCompanies': [],
+          'currentCompanyId': '',
         };
 
         await userDocRef.set(newUserData);
@@ -92,15 +132,23 @@ class FirestoreService {
     String? rfc,
     String? businessLine,
   }) async {
-    // ... (este código está perfecto y no cambia)
     final fbAuth.User? authUser = _auth.currentUser;
-    if (authUser == null) {
-      log('Error: No hay usuario autenticado para crear la empresa.', name: 'FirestoreService');
-      return false;
-    }
+    if (authUser == null) return false;
+
     try {
+      // Obtenemos datos actuales del usuario para validar límites
+      final userDocRef = _db.collection('users').doc(authUser.uid);
+      final userSnapshot = await userDocRef.get();
+      final user = User.fromFirestore(userSnapshot);
+
+      // --- VALIDACIÓN DE LÍMITE DE CREACIÓN ---
+      if (user.ownedCompanies.length >= 10) {
+        log('Error: Límite de empresas creadas alcanzado (10).', name: 'FirestoreService');
+        return false; // O lanzar una excepción personalizada
+      }
+
       final companyRef = _db.collection('companies').doc();
-      final userRef = _db.collection('users').doc(authUser.uid);
+      
       final Map<String, dynamic> companyData = {
         'name': companyName,
         'rfc': rfc ?? '',
@@ -108,14 +156,30 @@ class FirestoreService {
         'createdAt': FieldValue.serverTimestamp(),
         'ownerUid': authUser.uid,
       };
+
       final batch = _db.batch();
+      
+      // 1. Crear la empresa
       batch.set(companyRef, companyData);
-      batch.update(userRef, {
-        'companyId': companyRef.id,
+      
+      // 2. Actualizar el usuario (Multi-Empresa)
+      batch.update(userDocRef, {
+        // Agregar a la lista de empresas propias
+        'ownedCompanies': FieldValue.arrayUnion([companyRef.id]),
+        
+        // Guardamos rol Y nombre
+        'companies.${companyRef.id}': {
+          'role': 'super_admin',
+          'name': companyName
+        },
+        
+        // Establecer como activa
+        'currentCompanyId': companyRef.id,
         'status': 'active'
       });
+
       await batch.commit();
-      log('Empresa creada y Super Admin actualizado exitosamente.', name: 'FirestoreService');
+      log('Empresa creada y asignada exitosamente.', name: 'FirestoreService');
       return true;
     } catch (e) {
       print('--- DEBUG error al crear la empresa: $e ---');
@@ -129,7 +193,6 @@ class FirestoreService {
     required String role, 
   }) async {
     try {
-      // 1. Obtenemos los datos del usuario actual (el que invita)
       final User? currentUser = await getUserData();
       
       if (currentUser == null || currentUser.companyId.isEmpty) {
@@ -137,33 +200,43 @@ class FirestoreService {
         return false;
       }
 
-      // 2. Referencia al documento (Usamos el email del INVITADO)
-      // CORRECCIÓN 1: Usamos 'email' (el parámetro), no 'authUser'.
       final emailKey = email.trim().toLowerCase(); 
-      
-      // CORRECCIÓN 2: Usamos un nombre consistente para la referencia
       final invitationRef = _db.collection('invitations').doc(emailKey);
 
-      // (Opcional: Podrías revisar si ya existe con 'get()', pero 'set()' lo sobrescribe, lo cual también es válido para reenviar invitación)
-
-      // 3. Datos de la invitación
       final invitationData = {
-        'email': emailKey, // Guardamos el email ya limpio
+        'email': emailKey,
         'companyId': currentUser.companyId, 
+        // Guardamos el nombre de la empresa actual para que el invitado lo vea
+        'companyName': currentUser.currentCompanyName, 
         'role': role,
         'invitedBy': currentUser.uid, 
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      // 4. Guardar en Firestore
-      await invitationRef.set(invitationData); // Ahora sí usa la variable correcta
+      await invitationRef.set(invitationData);
       
       log('Invitación enviada a $emailKey', name: 'FirestoreService');
       return true;
 
     } catch (e) {
       log('Error al invitar usuario: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  Future<bool> switchCompany(String newCompanyId) async {
+    final fbAuth.User? authUser = _auth.currentUser;
+    if (authUser == null) return false;
+
+    try {
+      await _db.collection('users').doc(authUser.uid).update({
+        'currentCompanyId': newCompanyId,
+      });
+      log('Cambio de empresa exitoso a: $newCompanyId', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al cambiar de empresa: $e', name: 'FirestoreService');
       return false;
     }
   }

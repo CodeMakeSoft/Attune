@@ -1,5 +1,3 @@
-// lib/core/services/auth_service.dart
-
 import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -68,18 +66,49 @@ class AuthService {
   }
 
   Future<UserCredential?> signInWithFacebook() async {
+    AuthCredential? credential;
     try {
+      print('--- DEBUG: Iniciando login con Facebook... ---');
       final LoginResult result = await FacebookAuth.instance.login(
         permissions: ['email', 'public_profile'],
       );
-      if (result.status != LoginStatus.success) return null;
+      print('--- DEBUG: Facebook login result status: ${result.status} ---');
+      
+      if (result.status != LoginStatus.success) {
+        print('--- DEBUG: Facebook login failed: ${result.message} ---');
+        return null;
+      }
+      
       final AccessToken accessToken = result.accessToken!;
-      final credential =
-          FacebookAuthProvider.credential(accessToken.tokenString);
-      // Solo inicia sesión en Firebase Auth.
-      return await _auth.signInWithCredential(credential);
+      print('--- DEBUG: Facebook Access Token obtenido: ${accessToken.tokenString.substring(0, 10)}... ---');
+      
+      credential = FacebookAuthProvider.credential(accessToken.tokenString);
+      
+      print('--- DEBUG: Iniciando sesión en Firebase con credencial... ---');
+      final userCredential = await _auth.signInWithCredential(credential);
+      print('--- DEBUG: Firebase login exitoso. User: ${userCredential.user?.uid} ---');
+      
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      if(e.code == 'account-exists-with-different-credential' && credential != null) {
+        print('--- DEBUG Cuenta existente detectada, intentando vincular con Google... ---');
+
+        try {
+          final googleCredential = await signInWithGoogle();
+          if (googleCredential != null && googleCredential.user != null) {
+            print('--- DEBUG: Vinculación exitosa con Google ---');
+            await googleCredential.user!.linkWithCredential(credential);
+            print('--- DEBUG: Vinculación exitosa con Google ---');
+            return googleCredential;
+          }
+        } catch (e) {
+          print('--- DEBUG: Error al vincular cuentas ---');        
+        }
+      }
+      print('--- DEBUG: Error al iniciar sesión con Facebook (firebase) ---');
+      return null;
     } catch (e) {
-      log('Error en Facebook Sign-In: $e', name: 'AuthService');
+      print('--- DEBUG: Error en Facebook Sign-In (firebase) ---');
       return null;
     }
   }

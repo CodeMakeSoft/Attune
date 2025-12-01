@@ -62,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if(userCredential == null && mounted) {
         setState(() { _isLoading = false; });
       }
+      
     } catch (e) {
       log ('Error en Facebook Sign-In: $e', name: 'LoginScreen');
       if(mounted) {

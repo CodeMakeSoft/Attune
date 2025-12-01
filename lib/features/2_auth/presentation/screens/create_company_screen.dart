@@ -1,11 +1,8 @@
-// lib/features/2_auth/presentation/screens/create_company_screen.dart
-
 import 'package:attune/core/services/auth_service.dart';
-import 'package:attune/core/services/firestore_service.dart'; // Importaremos este
+import 'package:attune/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
 class CreateCompanyScreen extends StatefulWidget {
-  // Renombramos la clase
   const CreateCompanyScreen({super.key});
 
   @override

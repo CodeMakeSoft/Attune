@@ -17,15 +17,10 @@ class FirestoreService {
     final userDocRef = _db.collection('users').doc(authUser.uid);
     var userDocSnapshot = await userDocRef.get();
 
-    // 3. ¿El documento existe?
     if (userDocSnapshot.exists) {
-      // 3.1 SÍ EXISTE: Es un usuario que ya ha iniciado sesión antes.
-      // Devolvemos sus datos.
       log('Usuario existente encontrado.', name: 'FirestoreService');
       return User.fromFirestore(userDocSnapshot);
     } else {
-      // 3.2 NO EXISTE: Es un usuario NUEVO (se acaba de registrar).
-      // Buscamos una INVITACIÓN en la nueva colección.
       
       // 4. Busca en la colección 'invitations' usando el email como ID
       final invitationDocRef = _db.collection('invitations').doc(authUser.email!);
@@ -123,6 +118,7 @@ class FirestoreService {
       log('Empresa creada y Super Admin actualizado exitosamente.', name: 'FirestoreService');
       return true;
     } catch (e) {
+      print('--- DEBUG error al crear la empresa: $e ---');
       log('Error al crear la empresa: $e', name: 'FirestoreService');
       return false;
     }

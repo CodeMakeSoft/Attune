@@ -22,7 +22,8 @@ class FirestoreService {
       User user = User.fromFirestore(userDocSnapshot);
 
       // Revisar si hay invitaciones pendientes para este usuario existente
-      final invitationDocRef = _db.collection('invitations').doc(authUser.email!);
+      final emailKey = authUser.email!.trim().toLowerCase();
+      final invitationDocRef = _db.collection('invitations').doc(emailKey);
       final invitationDocSnapshot = await invitationDocRef.get();
 
       if (invitationDocSnapshot.exists) {
@@ -76,7 +77,8 @@ class FirestoreService {
     
     // --- 2. USUARIO NUEVO ---
     else {
-      final invitationDocRef = _db.collection('invitations').doc(authUser.email!);
+      final emailKey = authUser.email!.trim().toLowerCase();
+      final invitationDocRef = _db.collection('invitations').doc(emailKey);
       final invitationDocSnapshot = await invitationDocRef.get();
 
       if (invitationDocSnapshot.exists) {

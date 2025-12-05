@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Esta función verifica si el usuario está autenticado
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Reglas para la colección 'users'
+    match /users/{userId} {
+      // Permite leer si está autenticado (necesario para listar empleados)
+      allow read: if isSignedIn();
+      // Permite escribir si está autenticado (necesario para crear/editar perfil)
+      allow write: if isSignedIn();
+    }
+
+    // Reglas para la colección 'companies'
+    match /companies/{companyId} {
+      // Permite leer si está autenticado (necesario para ver departamentos/puestos)
+      allow read: if isSignedIn();
+      // Permite escribir si está autenticado (necesario para agregar departamentos)
+      allow write: if isSignedIn();
+    }
+
+    // Regla por defecto para otras colecciones (opcional, bloquear por seguridad)
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

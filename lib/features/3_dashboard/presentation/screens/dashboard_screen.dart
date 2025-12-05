@@ -51,7 +51,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final appUser = snapshot.data!;
 
-        if (appUser.role == 'super_admin' && appUser.companyId.isEmpty) {
+        // Si el usuario no tiene ninguna empresa asignada, lo redirigimos a crear una.
+        if (appUser.companies.isEmpty && appUser.companyId.isEmpty) {
           
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context).push(

@@ -34,6 +34,9 @@ class User {
   final String? curp;
   final String? nss;
 
+  // Helper for efficient querying
+  final List<String> companyIds;
+
   // --- Getters de Compatibilidad ---
   String get companyId => currentCompanyId;
   
@@ -62,6 +65,7 @@ class User {
     required this.uid,
     required this.email,
     required this.companies,
+    required this.companyIds, // Changed
     required this.ownedCompanies,
     required this.currentCompanyId,
     required this.status,
@@ -101,11 +105,21 @@ class User {
       ownedList = List<String>.from(data['ownedCompanies']);
     }
 
+    // Helper list companyIds
+    List<String> companyIdsList = [];
+    if (data['companyIds'] != null) {
+      companyIdsList = List<String>.from(data['companyIds']);
+    } else {
+      // Fallback: generate from companies map keys if missing
+      companyIdsList = companiesMap.keys.toList();
+    }
+
     return User(
       uid: doc.id,
       email: data['email'] ?? '',
       
       companies: companiesMap,
+      companyIds: companyIdsList,
       ownedCompanies: ownedList,
       currentCompanyId: data['currentCompanyId'] ?? (companiesMap.isNotEmpty ? companiesMap.keys.first : ''),
       
@@ -136,11 +150,14 @@ class User {
     String? gender,
     Map<String, String>? emergencyContact,
     String? currentCompanyId,
+    List<String>? companyIds,
+    Map<String, dynamic>? companies,
   }) {
     return User(
       uid: uid,
       email: email,
-      companies: companies,
+      companies: companies ?? this.companies,
+      companyIds: companyIds ?? this.companyIds,
       ownedCompanies: ownedCompanies,
       currentCompanyId: currentCompanyId ?? this.currentCompanyId,
       status: status,

@@ -67,7 +67,12 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
           // Añadimos un botón de Salir por si acaso
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => AuthService().signOut(),
+            onPressed: () async {
+              await AuthService().signOut();
+              // Navigator.of(context).pop(); // Actually AuthGate handles the state change
+              // But popping might be safer to ensure we leave this screen
+              if (mounted) Navigator.of(context).pop();
+            },
           ),
         ],
       ),

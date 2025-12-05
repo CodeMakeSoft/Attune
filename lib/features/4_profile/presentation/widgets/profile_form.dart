@@ -22,6 +22,8 @@ class ProfileForm extends StatefulWidget {
   final ProfilePermissions permissions;
   final Function(User) onSave;
   final bool isLoading;
+  final List<String> availableDepartments;
+  final List<String> availablePositions;
 
   const ProfileForm({
     super.key,
@@ -29,6 +31,8 @@ class ProfileForm extends StatefulWidget {
     required this.permissions,
     required this.onSave,
     this.isLoading = false,
+    this.availableDepartments = const [],
+    this.availablePositions = const [],
   });
 
   @override
@@ -40,7 +44,6 @@ class _ProfileFormState extends State<ProfileForm> {
 
   // Personal Controllers
   late TextEditingController _nameController;
-  late TextEditingController _phoneController;
   late TextEditingController _emergencyContactNameController;
   late TextEditingController _emergencyContactPhoneController;
   DateTime? _birthday;
@@ -51,6 +54,10 @@ class _ProfileFormState extends State<ProfileForm> {
   late TextEditingController _positionController;
   String? _contractType;
   DateTime? _hireDate;
+  
+  // Selection state for dropdowns
+  String? _selectedDepartment;
+  String? _selectedPosition;
 
   // Legal Controllers
   late TextEditingController _rfcController;
@@ -68,9 +75,6 @@ class _ProfileFormState extends State<ProfileForm> {
     
     // Personal
     _nameController = TextEditingController(text: user?.name ?? '');
-    // Assuming emergencyContact has 'phone' or similar if not separate. 
-    // The model says Map<String, String> emergencyContact. 
-    // Let's assume keys: 'name', 'phone'.
     _emergencyContactNameController = TextEditingController(text: user?.emergencyContact['name'] ?? '');
     _emergencyContactPhoneController = TextEditingController(text: user?.emergencyContact['phone'] ?? '');
     
@@ -80,6 +84,15 @@ class _ProfileFormState extends State<ProfileForm> {
     // Job
     _departmentController = TextEditingController(text: user?.department ?? '');
     _positionController = TextEditingController(text: user?.position ?? '');
+    
+    // Initialize Dropdown values
+    if (widget.availableDepartments.contains(user?.department)) {
+      _selectedDepartment = user?.department;
+    }
+    if (widget.availablePositions.contains(user?.position)) {
+      _selectedPosition = user?.position;
+    }
+
     _contractType = user?.contractType;
     _hireDate = user?.hireDate?.toDate();
 
@@ -104,36 +117,15 @@ class _ProfileFormState extends State<ProfileForm> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      final updatedUser = widget.user!.copyWith(
-        name: _nameController.text,
-        birthday: _birthday != null ? Timestamp.fromDate(_birthday!) : null,
-        gender: _gender,
-        emergencyContact: {
-          'name': _emergencyContactNameController.text,
-          'phone': _emergencyContactPhoneController.text,
-        },
-        // For job/legal, we can't fully copyWith nicely if fields are not in copyWith
-        // But checking User model copyWith:
-        // parameters: name, photoUrl, birthday, gender, emergencyContact, currentCompanyId.
-        // It seems copyWith is partial in the model provided earlier. 
-        // I should probably update the model later or use a different approach.
-        // Wait, checking the read file...
-        // copyWith lines 132-139: name, photoUrl, birthday, gender, emergencyContact, currentCompanyId. 
-        // MISSING: department, position, rfc, etc.
-        // I will assume for now I cannot edit them via copyWith or I need to update the model.
-        // I will update the model first? No, I'll stick to what I can do, but valid point.
-        // Actually, for "Edit Profile" usually users update Personal info.
-        // Admin updates Job info.
-        // If I need to update everything, I should fix the model copyWith first.
-      );
-
-      // Construct a new User object manually if copyWith is insufficient
-      // Or better, let's just make sure we capture all fields.
-      
+       // Logic to prioritize dropdown value/controller
+       final dept = widget.availableDepartments.isNotEmpty ? _selectedDepartment : _departmentController.text;
+       final pos = widget.availablePositions.isNotEmpty ? _selectedPosition : _positionController.text;
+       
        final fullUpdatedUser = User(
         uid: widget.user!.uid,
         email: widget.user!.email,
         companies: widget.user!.companies,
+        companyIds: widget.user!.companyIds,
         ownedCompanies: widget.user!.ownedCompanies,
         currentCompanyId: widget.user!.currentCompanyId,
         status: widget.user!.status,
@@ -146,8 +138,8 @@ class _ProfileFormState extends State<ProfileForm> {
           'name': _emergencyContactNameController.text,
           'phone': _emergencyContactPhoneController.text,
         },
-        department: _departmentController.text,
-        position: _positionController.text,
+        department: dept ?? '',
+        position: pos ?? '',
         contractType: _contractType,
         hireDate: _hireDate != null ? Timestamp.fromDate(_hireDate!) : null,
         rfc: _rfcController.text,
@@ -264,6 +256,7 @@ class _ProfileFormState extends State<ProfileForm> {
     );
   }
 
+  // UPDATE _buildJobSection
   Widget _buildJobSection() {
     final enabled = widget.permissions.canEditJob;
     return Column(
@@ -271,19 +264,40 @@ class _ProfileFormState extends State<ProfileForm> {
       children: [
         _buildSectionHeader("Información Laboral", FontAwesomeIcons.briefcase),
         
-        _buildTextField(
-          label: "Departamento",
-          controller: _departmentController,
-          enabled: enabled,
-          icon: FontAwesomeIcons.building,
-        ),
+        if (widget.availableDepartments.isNotEmpty)
+          _buildDropdown(
+            label: "Departamento", 
+            value: _selectedDepartment, 
+            items: widget.availableDepartments, 
+            enabled: enabled, 
+            onChanged: (v) => setState(() => _selectedDepartment = v),
+          )
+        else
+          _buildTextField(
+            label: "Departamento",
+            controller: _departmentController,
+            enabled: enabled,
+            icon: FontAwesomeIcons.building,
+          ),
+          
         const SizedBox(height: 16),
-        _buildTextField(
-          label: "Puesto",
-          controller: _positionController,
-          enabled: enabled,
-          icon: FontAwesomeIcons.idBadge,
-        ),
+        
+        if (widget.availablePositions.isNotEmpty)
+          _buildDropdown(
+            label: "Puesto", 
+            value: _selectedPosition, 
+            items: widget.availablePositions, 
+            enabled: enabled, 
+            onChanged: (v) => setState(() => _selectedPosition = v),
+          )
+        else
+          _buildTextField(
+            label: "Puesto",
+            controller: _positionController,
+            enabled: enabled,
+            icon: FontAwesomeIcons.idBadge,
+          ),
+
         const SizedBox(height: 16),
         Row(
           children: [

@@ -46,8 +46,7 @@ class FirestoreService {
           // Nota: Usamos notación de punto para actualizar campos anidados en mapas de Firestore
           batch.update(userDocRef, {
             'companies.$newCompanyId': newRole,
-            // Opcional: ¿Cambiamos el foco a la nueva empresa?
-            // 'currentCompanyId': newCompanyId, 
+            'companyIds': FieldValue.arrayUnion([newCompanyId]),
           });
           
           batch.delete(invitationDocRef);
@@ -100,6 +99,7 @@ class FirestoreService {
               'name': invitationData['companyName'] ?? 'Empresa Invitada'
             }
           },
+          'companyIds': [invitationData['companyId']],
           'ownedCompanies': [],
           'currentCompanyId': invitationData['companyId'],
         };
@@ -173,20 +173,24 @@ class FirestoreService {
       batch.set(companyRef, companyData);
       
       // 2. Actualizar el usuario (Multi-Empresa)
-      batch.update(userDocRef, {
+      // Usamos set con merge: true para mayor seguridad si faltan campos
+      batch.set(userDocRef, {
         // Agregar a la lista de empresas propias
         'ownedCompanies': FieldValue.arrayUnion([companyRef.id]),
+        'companyIds': FieldValue.arrayUnion([companyRef.id]),
         
-        // Guardamos rol Y nombre
-        'companies.${companyRef.id}': {
-          'role': 'super_admin',
-          'name': companyName
+        // Guardamos rol Y nombre (Merge de mapas anidados)
+        'companies': {
+           companyRef.id: {
+            'role': 'super_admin',
+            'name': companyName
+           }
         },
         
         // Establecer como activa
         'currentCompanyId': companyRef.id,
         'status': 'active'
-      });
+      }, SetOptions(merge: true));
 
       await batch.commit();
       log('Empresa creada y asignada exitosamente.', name: 'FirestoreService');
@@ -282,5 +286,51 @@ class FirestoreService {
       log('Error al actualizar usuario: $e', name: 'FirestoreService');
       return false;
     }
+  }
+  // --- ORGANIZATION MANAGEMENT ---
+
+  // Obtener empleados de una empresa
+  Stream<List<User>> getEmployees(String companyId) {
+    return _db
+        .collection('users')
+        .where('companyIds', arrayContains: companyId)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => User.fromFirestore(doc)).toList());
+  }
+
+  // Obtener detalles de la empresa (incluyendo deptos y roles)
+  Stream<DocumentSnapshot> getCompanyStream(String companyId) {
+    return _db.collection('companies').doc(companyId).snapshots();
+  }
+
+  Future<void> updateDepartments(String companyId, List<String> departments) async {
+    await _db.collection('companies').doc(companyId).update({
+      'departments': departments,
+    });
+  }
+
+  Future<void> updateJobTitles(String companyId, List<String> jobTitles) async {
+    await _db.collection('companies').doc(companyId).update({
+      'jobTitles': jobTitles,
+    });
+  }
+
+  // Actualizar perfil laboral de un empleado (solo admins)
+  Future<void> updateEmployeeWorkProfile(String userId, String companyId, {
+    String? department,
+    String? position,
+    String? role, // Admin / User role
+  }) async {
+    Map<String, dynamic> updates = {};
+    if (department != null) updates['department'] = department;
+    if (position != null) updates['position'] = position;
+    
+    // Si cambia el rol de sistema (Admin/User), actualizamos el mapa
+    if (role != null) {
+       updates['companies.$companyId.role'] = role;
+    }
+
+    await _db.collection('users').doc(userId).update(updates);
   }
 }

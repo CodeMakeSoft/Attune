@@ -1,9 +1,10 @@
 import 'package:attune/features/3_dashboard/presentation/widgets/dashboard_grid_button.dart';
+import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
+import 'package:attune/features/5_employees/presentation/screens/employee_list_screen.dart';
 import 'package:attune/features/5_employees/presentation/screens/invite_user_screen.dart';
+import 'package:attune/features/8_organization/presentation/screens/organization_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 
 class SuperAdminDashboardView extends StatelessWidget {
   const SuperAdminDashboardView({super.key});
@@ -30,16 +31,20 @@ class SuperAdminDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.sitemap,
           label: 'Deptos. y Roles',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const OrganizationScreen()),
+            );
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.users,
           label: 'Empleados',
           onPressed: () {
-            // Navegar a la pantalla de invitar
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const InviteUserScreen()),
+              MaterialPageRoute(builder: (context) => const EmployeeListScreen()),
             );
           },
         ),

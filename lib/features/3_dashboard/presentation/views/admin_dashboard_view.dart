@@ -4,8 +4,12 @@ import 'package:attune/features/5_employees/presentation/screens/employee_list_s
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'package:attune/core/models/user_model.dart';
+import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
+
 class AdminDashboardView extends StatelessWidget {
-  const AdminDashboardView({super.key});
+  final User currentUser;
+  const AdminDashboardView({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +48,26 @@ class AdminDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.chartLine, // Icono para "Evaluar"
           label: 'Evaluar Desempeño',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EmployeeListScreen(
+                  onEmployeeSelected: (selectedEmployee) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EvaluationFormScreen(
+                          employee: selectedEmployee,
+                          evaluator: currentUser,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.moneyBillWave,

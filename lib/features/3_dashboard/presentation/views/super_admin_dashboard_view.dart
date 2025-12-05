@@ -6,8 +6,12 @@ import 'package:attune/features/8_organization/presentation/screens/organization
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'package:attune/core/models/user_model.dart';
+import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
+
 class SuperAdminDashboardView extends StatelessWidget {
-  const SuperAdminDashboardView({super.key});
+  final User currentUser;
+  const SuperAdminDashboardView({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +49,30 @@ class SuperAdminDashboardView extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const EmployeeListScreen()),
+            );
+          },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.chartLine,
+          label: 'Evaluar Desempeño',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EmployeeListScreen(
+                  onEmployeeSelected: (selectedEmployee) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EvaluationFormScreen(
+                          employee: selectedEmployee,
+                          evaluator: currentUser,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             );
           },
         ),

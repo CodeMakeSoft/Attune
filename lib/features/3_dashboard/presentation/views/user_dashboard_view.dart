@@ -4,8 +4,13 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 
+import 'package:attune/core/models/user_model.dart';
+import 'package:attune/features/9_performance/presentation/screens/user_performance_screen.dart';
+import 'package:attune/features/10_attendance/presentation/screens/user_attendance_screen.dart';
+
 class UserDashboardView extends StatelessWidget {
-  const UserDashboardView({super.key});
+  final User currentUser;
+  const UserDashboardView({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +39,17 @@ class UserDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.solidCalendarCheck, // Asistencia
           label: 'Asistencia',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserAttendanceScreen(
+                  userId: currentUser.uid,
+                  companyId: currentUser.companyId,
+                ),
+              ),
+            );
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.filePen, // Permisos (Solicitar)
@@ -44,7 +59,12 @@ class UserDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.chartSimple, // Desempeño
           label: 'Mi Desempeño',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => UserPerformanceScreen(userId: currentUser.uid)),
+            );
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.umbrellaBeach, // Prestaciones

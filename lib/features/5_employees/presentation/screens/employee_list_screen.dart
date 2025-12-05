@@ -8,7 +8,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // Note: We'll add navigation to detail screen later
 
 class EmployeeListScreen extends StatefulWidget {
-  const EmployeeListScreen({super.key});
+  final Function(User)? onEmployeeSelected;
+
+  const EmployeeListScreen({
+    super.key, 
+    this.onEmployeeSelected,
+  });
 
   @override
   State<EmployeeListScreen> createState() => _EmployeeListScreenState();
@@ -91,12 +96,16 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                 subtitle: Text(employee.email),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditEmployeeScreen(employee: employee),
-                    ),
-                  );
+                  if (widget.onEmployeeSelected != null) {
+                    widget.onEmployeeSelected!(employee);
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditEmployeeScreen(employee: employee),
+                      ),
+                    );
+                  }
                 },
               );
             },

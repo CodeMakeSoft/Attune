@@ -1,6 +1,7 @@
 // lib/core/services/firestore_service.dart
 
 import 'package:attune/core/models/user_model.dart';
+import 'package:attune/core/models/evaluation_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fbAuth; // Renombramos
 import 'dart:developer';
@@ -333,6 +334,68 @@ class FirestoreService {
        updates['companies.$companyId.role'] = role;
     }
 
-    await _db.collection('users').doc(userId).update(updates);
+  }
+
+  // --- PERFORMANCE EVALUATIONS ---
+
+  Future<void> addEvaluation(Evaluation evaluation) async {
+    await _db.collection('evaluations').add(evaluation.toJson());
+  }
+
+  Stream<List<Evaluation>> getEmployeeEvaluations(String employeeId) {
+    return _db
+        .collection('evaluations')
+        .where('employeeId', isEqualTo: employeeId)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Evaluation.fromFirestore(doc)).toList());
+  }
+
+  // --- ATTENDANCE ---
+  
+  // Registrar asistencia (Check-in / Check-out)
+  // Simple version: creates a new document for each event or updates today's doc.
+  // We'll use a document per day per user: `attendance/{companyId}/days/{date}/records/{userId}`
+  // Simplified: `attendance/{recordId}` with userId, date, checkIn, checkOut
+  
+  Future<void> logCheckIn(String userId, String companyId) async {
+    final now = DateTime.now();
+    // Normalizar fecha (sin hora) para buscar si ya existe registro hoy
+    final todayStr = "${now.year}-${now.month}-${now.day}"; 
+    final recordId = "${userId}_$todayStr";
+    
+    final docRef = _db.collection('attendance').doc(recordId);
+    
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      await docRef.set({
+        'userId': userId,
+        'companyId': companyId,
+        'date': todayStr,
+        'checkIn': FieldValue.serverTimestamp(),
+        'status': 'present', // podria ser 'late' si comparamos con horario
+      });
+    }
+  }
+
+  Future<void> logCheckOut(String userId) async {
+    final now = DateTime.now();
+    final todayStr = "${now.year}-${now.month}-${now.day}"; 
+    final recordId = "${userId}_$todayStr";
+    
+    await _db.collection('attendance').doc(recordId).update({
+      'checkOut': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Obtener asistencia de un usuario
+  Stream<List<Map<String, dynamic>>> getUserAttendance(String userId) {
+    return _db
+        .collection('attendance')
+        .where('userId', isEqualTo: userId)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 }

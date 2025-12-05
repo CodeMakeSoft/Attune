@@ -87,14 +87,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Widget dashboardView;
         switch (appUser.role) {
           case 'admin':
-            dashboardView = const AdminDashboardView();
+            dashboardView = AdminDashboardView(currentUser: appUser);
             break;
           case 'super_admin':
-            dashboardView = const SuperAdminDashboardView();
+            dashboardView = SuperAdminDashboardView(currentUser: appUser);
             break;
           case 'user':
           default:
-            dashboardView = const UserDashboardView();
+            dashboardView = UserDashboardView(currentUser: appUser);
             break;
         }
 

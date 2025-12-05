@@ -8,6 +8,8 @@ import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/user_performance_screen.dart';
 import 'package:attune/features/10_attendance/presentation/screens/user_attendance_screen.dart';
 
+import 'package:attune/core/widgets/generic_placeholder_screen.dart';
+
 class UserDashboardView extends StatelessWidget {
   final User currentUser;
   const UserDashboardView({super.key, required this.currentUser});
@@ -34,7 +36,9 @@ class UserDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.fileInvoiceDollar, // Finanzas
           label: 'Finanzas',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Finanzas', icon: FontAwesomeIcons.fileInvoiceDollar)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.solidCalendarCheck, // Asistencia
@@ -54,7 +58,9 @@ class UserDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.filePen, // Permisos (Solicitar)
           label: 'Solicitar Permiso',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Solicitar Permiso', icon: FontAwesomeIcons.filePen)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.chartSimple, // Desempeño
@@ -69,17 +75,23 @@ class UserDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.umbrellaBeach, // Prestaciones
           label: 'Prestaciones',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Prestaciones', icon: FontAwesomeIcons.umbrellaBeach)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.calendarWeek,
           label: 'Eventos',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Eventos', icon: FontAwesomeIcons.calendarWeek)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.solidCircleQuestion,
           label: 'Soporte',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Soporte', icon: FontAwesomeIcons.solidCircleQuestion)));
+          },
         ),
       ],
     );

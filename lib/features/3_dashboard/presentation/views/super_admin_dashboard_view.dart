@@ -9,6 +9,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
 
+import 'package:attune/core/widgets/generic_placeholder_screen.dart';
+
 class SuperAdminDashboardView extends StatelessWidget {
   final User currentUser;
   const SuperAdminDashboardView({super.key, required this.currentUser});
@@ -79,27 +81,37 @@ class SuperAdminDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.solidGem, // Membresía
           label: 'Membresía',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Membresía', icon: FontAwesomeIcons.solidGem)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.moneyBillWave,
           label: 'Pagos',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Pagos', icon: FontAwesomeIcons.moneyBillWave)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.clockRotateLeft,
           label: 'Historial',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Historial', icon: FontAwesomeIcons.clockRotateLeft)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.calendarWeek,
           label: 'Eventos',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Eventos', icon: FontAwesomeIcons.calendarWeek)));
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.solidCircleQuestion,
           label: 'Soporte',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Soporte', icon: FontAwesomeIcons.solidCircleQuestion)));
+          },
         ),
       ],
     );

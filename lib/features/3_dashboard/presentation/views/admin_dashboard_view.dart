@@ -2,6 +2,8 @@ import 'package:attune/features/3_dashboard/presentation/widgets/dashboard_grid_
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
+
 class AdminDashboardView extends StatelessWidget {
   const AdminDashboardView({super.key});
 
@@ -17,7 +19,12 @@ class AdminDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.solidUser, 
           label: 'Mi Perfil',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.users,

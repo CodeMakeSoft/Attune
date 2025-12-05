@@ -3,6 +3,7 @@ import 'package:attune/core/services/auth_service.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/core/widgets/loading_screen.dart';
 import 'package:attune/features/2_auth/presentation/screens/create_company_screen.dart'; 
+import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 import 'package:attune/features/3_dashboard/presentation/views/admin_dashboard_view.dart';
 import 'package:attune/features/3_dashboard/presentation/views/super_admin_dashboard_view.dart';
 import 'package:attune/features/3_dashboard/presentation/views/user_dashboard_view.dart';

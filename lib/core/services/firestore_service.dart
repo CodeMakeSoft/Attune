@@ -62,6 +62,16 @@ class FirestoreService {
         }
       }
 
+      
+      // --- SYNC AUTH DATA ---
+      // Check if photoUrl needs to be updated from Auth
+      if (authUser.photoURL != null && authUser.photoURL != user.photoUrl) {
+         log('Syncing photoUrl from Auth to Firestore...', name: 'FirestoreService');
+         await userDocRef.update({'photoUrl': authUser.photoURL});
+         // Update the local user object to reflect the change immediately
+         user = user.copyWith(photoUrl: authUser.photoURL);
+      }
+
       return user;
     } 
     
@@ -237,6 +247,39 @@ class FirestoreService {
       return true;
     } catch (e) {
       log('Error al cambiar de empresa: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  Future<bool> updateUser(User user) async {
+    try {
+      // Map valid fields to update
+      // We do NOT update 'uid', 'email', 'createdAt', 'status', 'companies' etc here directly
+      // unless specifically required.
+      final data = {
+        'name': user.name,
+        'photoUrl': user.photoUrl,
+        'birthday': user.birthday,
+        'gender': user.gender,
+        'emergencyContact': user.emergencyContact,
+        'department': user.department,
+        'position': user.position,
+        'contractType': user.contractType,
+        'hireDate': user.hireDate,
+        'rfc': user.rfc,
+        'curp': user.curp,
+        'nss': user.nss,
+      };
+
+      // Remove nulls if you want to perform partial updates or keep them to unset? 
+      // Firestore update ignores fields not in the map? No, update updates the fields present.
+      // If value is null, it sets it to null in Firestore.
+      
+      await _db.collection('users').doc(user.uid).update(data);
+      log('Usuario actualizado exitosamente.', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al actualizar usuario: $e', name: 'FirestoreService');
       return false;
     }
   }

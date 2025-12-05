@@ -3,6 +3,8 @@ import 'package:attune/features/5_employees/presentation/screens/invite_user_scr
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
+
 class SuperAdminDashboardView extends StatelessWidget {
   const SuperAdminDashboardView({super.key});
 
@@ -18,7 +20,12 @@ class SuperAdminDashboardView extends StatelessWidget {
         DashboardGridButton(
           icon: FontAwesomeIcons.solidUser,
           label: 'Mi Perfil',
-          onPressed: () { /* TODO */ },
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          },
         ),
         DashboardGridButton(
           icon: FontAwesomeIcons.sitemap,

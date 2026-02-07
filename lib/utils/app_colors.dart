@@ -5,27 +5,30 @@ class AppColors {
   // --- 1. Colores de Contenido/Texto (Content) ---
   static const Color contentPrimary = Color(0xFF1A1D24); // Gris oscuro/negro para texto principal.
   static const Color contentInverse = Color(0xFFFFFFFF); // Blanco para texto sobre fondos oscuros.
-  static const Color contentSecondary = Color(0xFF424242); // Gris intermedio para texto secundario o hints.
+  static const Color contentSecondary = Color(0xFF6B7280); // Gris más suave y moderno.
 
   // --- 2. Colores de Fondo (Background) ---
-  static const Color backgroundPrimary = Color(0xFFFFFFFF); // Fondo principal de la aplicación (Modo Claro).
-  static const Color backgroundSubtle = Color(0xFFF2F5F7);  // Fondo de tarjetas, campos de entrada, o barras.
-  static const Color backgroundDark = Color(0xFF0A0C10);    // Fondo para Modo Oscuro.
+  static const Color backgroundPrimary = Color(0xFFF9FAFB); // Off-white moderno (Cool Gray 50).
+  static const Color backgroundSurface = Color(0xFFFFFFFF); // Blanco puro para tarjetas.
+  static const Color backgroundSubtle = Color(0xFFF3F4F6);  // Fondo secundario (Cool Gray 100).
+  static const Color backgroundDark = Color(0xFF0F172A);    // Fondo para Modo Oscuro (Slate 900).
 
   // --- 3. Colores de Interfaz/Acción (Accent & Brand) - Colores del logo ---
-  static const Color accentPrimary = Color(0xFF153065);    // voidNavy - Color principal de marca (botones, headers).
-  static const Color accentSecondary = Color(0xFF59CCBD);  // laserTeal - Color de contraste/resaltado (enlaces, iconos).
+  static const Color accentPrimary = Color(0xFF153065);    // voidNavy - Base.
+  static const Color accentPrimaryLight = Color(0xFF2563EB); // Un azul más vibrante para interacciones.
+  static const Color accentSecondary = Color(0xFF0EA5E9);  // Sky Blue - más moderno que el teal anterior.
   
-  // Nuevo: Variante más clara del color primario para estados de interacción (hover)
-  static const Color accentPrimaryLight = Color(0xFF4769AA); // Una versión más suave del voidNavy.
+  // Gradientes
+  static const Color gradientStart = Color(0xFF153065);
+  static const Color gradientEnd = Color(0xFF1E40AF); // Un azul un poco más claro para dar profundidad.
 
   // --- 4. Colores de Estado (State/Semantic) ---
-  static const Color stateSuccess = Color(0xFF4CAF50);    // Verde para operaciones exitosas o confirmación.
-  static const Color stateError = Color(0xFFE53935);      // Rojo para errores, fallas o alertas críticas.
-  static const Color stateWarning = Color(0xFFFF9800);    // Naranja para advertencias o información importante.
-  static const Color stateInfo = Color(0xFF2196F3);       // Azul claro para mensajes informativos.
+  static const Color stateSuccess = Color(0xFF10B981);    // Emerald 500
+  static const Color stateError = Color(0xFFEF4444);      // Red 500
+  static const Color stateWarning = Color(0xFFF59E0B);    // Amber 500
+  static const Color stateInfo = Color(0xFF3B82F6);       // Blue 500
 
   // --- 5. Colores de Estructura (Structure) ---
-  static const Color borderDefault = Color(0xFFE3E8ED); // Líneas y contornos en modo claro.
-  static const Color dividerDark = Color(0xFF2A2E36);   // Líneas divisorias en temas oscuros.
+  static const Color borderDefault = Color(0xFFE5E7EB); // Gray 200
+  static const Color dividerDark = Color(0xFF1F2937);   // Gray 800
 }

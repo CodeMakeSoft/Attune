@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:developer';
 import 'dart:async';
+import 'package:attune/utils/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -419,161 +420,258 @@ void _showRegistrationDialog() {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        body: SafeArea(
-          // --- 4. Usamos un Stack para poner el 'loading' encima ---
-          child: Stack(
-            children: [
-              Form(
-                key: _formKey,
+        body: Stack(
+          children: [
+            // 1. Fondo decorativo superior con gradiente
+            Container(
+              height: MediaQuery.of(context).size.height * 0.45,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
+              ),
+            ),
+
+            // 2. Contenido Principal
+            SafeArea(
+              child: Center(
                 child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icon/icon.svg',
-                          width: 100.0,
-                          height: 100.0,
-                        ),
-                        const SizedBox(height: 32),
-
-                        Text(
-                          '¡Bienvenido!',
-                          textAlign: TextAlign.center,
-                          style: textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+                  child: Column(
+                    children: [
+                      // Header Section
+                      Hero(
+                        tag: 'app_logo',
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              )
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            'assets/icon/icon.svg',
+                            width: 64.0,
+                            height: 64.0,
                           ),
                         ),
-                        const SizedBox(height: 48),
-
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: InputDecoration(
-                            labelText: 'Correo',
-                            errorText: _emailError,
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          autocorrect: false,
-                          
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        '¡Bienvenido!',
+                        textAlign: TextAlign.center,
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
                         ),
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _isPasswordObscured,
-                          decoration: InputDecoration(
-                            labelText: 'Contraseña',
-                            errorText: _passwordError,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isPasswordObscured = !_isPasswordObscured;
-                                });
-                              },
-                            ),
-                          ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ingresa a tu cuenta para continuar.',
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: Colors.white.withOpacity(0.9),
                         ),
-                        const SizedBox(height: 16),
+                      ),
+                      const SizedBox(height: 32),
 
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _isLoading ? null : _showPasswordResetDialog,
-                            child: const Text('¿Olvidaste tu contraseña?'),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _handleEmailSignIn,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: const Text(
-                            'Ingresar',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Text(
-                                'o también',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
+                      // 3. Tarjeta del Formulario
+                      Card(
+                        elevation: 8,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                TextFormField(
+                                  controller: _emailController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Correo Electrónico',
+                                    hintText: 'ejemplo@empresa.com',
+                                    errorText: _emailError,
+                                    prefixIcon: const Icon(Icons.email_outlined),
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                  autocorrect: false,
                                 ),
+                                const SizedBox(height: 20),
+
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: _isPasswordObscured,
+                                  decoration: InputDecoration(
+                                    labelText: 'Contraseña',
+                                    errorText: _passwordError,
+                                    prefixIcon: const Icon(Icons.lock_outline),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                        color: AppColors.contentSecondary,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordObscured = !_isPasswordObscured;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: _isLoading ? null : _showPasswordResetDialog,
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      '¿Olvidaste tu contraseña?',
+                                      style: TextStyle(color: colorScheme.primary),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
+                                ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleEmailSignIn,
+                                  child: const Text('INGRESAR'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 32),
+
+                      // 4. Social Login & Register (Fuera de la tarjeta para menos ruido visual)
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              'O ingresa con',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.contentSecondary,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const Expanded(child: Divider()),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Login With Google
-                        OutlinedButton.icon(
-                          // Si está cargando, deshabilitamos el botón (onPressed: null)
-                          onPressed: _isLoading ? null : _handleGoogleSignIn,
-                          icon: const FaIcon(FontAwesomeIcons.google, color: Colors.red),
-                          label: const Text('Ingresar con Google'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            foregroundColor: colorScheme.onSurface,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Login with Facebook
-                        OutlinedButton.icon(
-                          // Si está cargando, deshabilitamos el botón
-                          onPressed: _isLoading ? null : _handleFacebookSignIn,
-                          icon: const FaIcon(FontAwesomeIcons.facebook, color: Colors.blue),
-                          label: const Text('Ingresar con Facebook'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            foregroundColor: colorScheme.onSurface,
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _SocialLoginButton(
+                            icon: FontAwesomeIcons.google,
+                            color: Colors.red,
+                            onTap: _isLoading ? null : _handleGoogleSignIn,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '¿No tienes una cuenta?',
-                              style: textTheme.bodyMedium,
+                          const SizedBox(width: 24),
+                          _SocialLoginButton(
+                            icon: FontAwesomeIcons.facebook,
+                            color: Colors.blue,
+                            onTap: _isLoading ? null : _handleFacebookSignIn,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '¿No tienes una cuenta?',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: AppColors.contentSecondary,
                             ),
-                            TextButton(
-                              onPressed: _isLoading ? null : _showRegistrationDialog, 
-                              child: const Text('Registrate'),
+                          ),
+                          TextButton(
+                            onPressed: _isLoading ? null : _showRegistrationDialog, 
+                            child: const Text(
+                              'Regístrate aquí',
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-              
-              // --- 6. El indicador de carga ---
-              // Si _isLoading es true, muestra un 'loading' semitransparente
-              if (_isLoading)
-                Container(
-                  color: const Color.fromRGBO(0, 0, 0, 0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+            ),
+            
+            // 5. Loading Indicator Overlay
+            if (_isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
                 ),
-            ],
-          ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget auxiliar para botones sociales redondos y limpios
+class _SocialLoginButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _SocialLoginButton({
+    required this.icon,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        child: Center(
+          child: FaIcon(icon, color: color, size: 24),
         ),
       ),
     );

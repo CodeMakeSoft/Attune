@@ -39,62 +39,87 @@ class MyApp extends StatelessWidget {
         // 1. Color de fondo principal para todas las pantallas
         scaffoldBackgroundColor: AppColors.backgroundPrimary,
         
-        // 2. El esquema de color (el más importante)
+        // 2. El esquema de color modernizado
         colorScheme: ColorScheme(
-          brightness: Brightness.light, // Modo claro
+          brightness: Brightness.light, 
           
-          primary: AppColors.accentPrimary,    // Tu color principal (voidNavy)
-          onPrimary: AppColors.contentInverse,  // Texto sobre el color primario (blanco)
+          primary: AppColors.accentPrimary,    
+          onPrimary: AppColors.contentInverse, 
           
-          secondary: AppColors.accentSecondary, // Tu color secundario (laserTeal)
-          onSecondary: AppColors.contentPrimary, // Texto sobre el color secundario
+          secondary: AppColors.accentSecondary, 
+          onSecondary: AppColors.contentInverse, // Ahora blanco para mejor contraste
           
-          error: AppColors.stateError,      // Rojo para errores
-          onError: AppColors.contentInverse,  // Texto sobre el color de error
+          error: AppColors.stateError,      
+          onError: AppColors.contentInverse,  
           
-          surface: AppColors.backgroundPrimary,      // Fondo principal
-          onSurface: AppColors.contentPrimary,     // Texto sobre el fondo
-
-          inverseSurface: AppColors.backgroundSubtle, // Fondo de tarjetas/campos
-          onInverseSurface: AppColors.contentPrimary, // Texto sobre tarjetas
+          surface: AppColors.backgroundSurface, // Tarjetas blancas
+          onSurface: AppColors.contentPrimary,    
+ 
+          inverseSurface: AppColors.backgroundDark, 
+          onInverseSurface: AppColors.contentInverse, 
         ),
 
-        // 3. Tema por defecto para las AppBars
+        // 3. Tema moderna para AppBars
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.backgroundPrimary, // Fondo de la barra
-          foregroundColor: AppColors.contentPrimary,   // Color del título
-          elevation: 0, // Sin sombra, para un look limpio
+          backgroundColor: AppColors.backgroundPrimary, 
+          foregroundColor: AppColors.contentPrimary,   
+          elevation: 0, 
           centerTitle: true,
+          scrolledUnderElevation: 0, 
         ),
         
-        // 4. Tema por defecto para los Campos de Texto
+        // 4. Input Fields más modernos y limpios
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: AppColors.backgroundSubtle,
+          fillColor: AppColors.backgroundSubtle, // Cambiado a un tono sutil (gris muy claro) para que resalte sobre blanco
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          hintStyle: const TextStyle(color: AppColors.contentSecondary),
           labelStyle: const TextStyle(color: AppColors.contentSecondary),
+          
+          // Bordes más suaves
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.borderDefault),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.transparent), // Sin borde por defecto si tiene fondo
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.borderDefault),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.transparent),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppColors.accentPrimary, width: 2.0),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.stateError),
           ),
         ),
 
-        // 5. Tema por defecto para Botones Elevados
+        // 5. Botones más prominentes y redondeados
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accentPrimary, // Fondo del botón
-            foregroundColor: AppColors.contentInverse, // Color del texto
+            backgroundColor: AppColors.accentPrimary,
+            foregroundColor: AppColors.contentInverse,
+            elevation: 2, // Sutil elevación
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16, 
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
+        ),
+        
+        // 6. Configuración de Tarjetas
+        cardTheme: CardThemeData(
+          color: AppColors.backgroundSurface,
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.05),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          margin: EdgeInsets.zero,
         ),
       ),
       // -----------------------------

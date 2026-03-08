@@ -1,7 +1,6 @@
 import 'package:attune/features/3_dashboard/presentation/widgets/dashboard_grid_button.dart';
 import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 import 'package:attune/features/5_employees/presentation/screens/employee_list_screen.dart';
-import 'package:attune/features/5_employees/presentation/screens/invite_user_screen.dart';
 import 'package:attune/features/8_organization/presentation/screens/organization_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

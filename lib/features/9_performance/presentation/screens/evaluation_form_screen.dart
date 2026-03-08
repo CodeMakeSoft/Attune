@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/models/evaluation_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class EvaluationFormScreen extends StatefulWidget {
   final User employee;

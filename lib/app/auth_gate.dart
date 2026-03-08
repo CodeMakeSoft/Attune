@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'package:attune/core/widgets/loading_screen.dart';
 import 'package:attune/features/2_auth/presentation/screens/login_screen.dart';
-import 'package:attune/features/3_dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:attune/features/3_dashboard/presentation/screens/main_navigation_screen.dart';
 
 

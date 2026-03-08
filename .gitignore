@@ -52,3 +52,7 @@ ios/Runner/GoogleService-Info.plist
 .vscode/
 .vscode/launch.json
 /android/key.properties
+
+
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist

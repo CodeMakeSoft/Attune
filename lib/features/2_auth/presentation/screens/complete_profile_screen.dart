@@ -1,6 +1,4 @@
-import 'dart:nativewrappers/_internal/vm/lib/math_patch.dart';
 
-import 'package:attune/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
 class CompleteProfileScreen extends StatefulWidget {

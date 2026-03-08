@@ -17,7 +17,7 @@ class DashboardGridButton extends StatelessWidget {
     // Usamos Card para darle el fondo y los bordes
     return Card(
       // Usamos el color 'surfaceVariant' del tema para un fondo sutil
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
       elevation: 0, // Un look plano y moderno
       shape: RoundedRectangleBorder(
         // Bordes redondeados

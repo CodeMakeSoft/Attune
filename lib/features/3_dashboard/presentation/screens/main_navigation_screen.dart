@@ -2,6 +2,7 @@ import 'dart:ui'; // Necesario para el efecto borroso (Blur)
 import 'package:flutter/material.dart';
 import 'package:attune/utils/app_colors.dart';
 import 'package:attune/features/3_dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:attune/features/10_attendance/presentation/screens/attendance_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -15,7 +16,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _pages = [
     const DashboardScreen(), // Index 0: Inicio
-    const Center(child: Text("Pantalla Asistencia")), // Index 1: Placeholder
+    const AttendanceScreen(), // Index 1: Asistencia
     const Center(child: Text("Pantalla Equipo")), // Index 2: Placeholder
     const Center(child: Text("Pantalla Perfil")), // Index 3: Placeholder
   ];

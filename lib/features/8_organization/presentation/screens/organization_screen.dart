@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:attune/core/models/company_model.dart';
-import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/core/widgets/loading_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class OrganizationScreen extends StatefulWidget {
   const OrganizationScreen({super.key});

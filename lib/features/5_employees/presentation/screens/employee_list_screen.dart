@@ -4,7 +4,6 @@ import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/core/widgets/loading_screen.dart';
 import 'package:attune/features/5_employees/presentation/screens/invite_user_screen.dart';
 import 'package:attune/features/5_employees/presentation/screens/edit_employee_screen.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // Note: We'll add navigation to detail screen later
 
 class EmployeeListScreen extends StatefulWidget {

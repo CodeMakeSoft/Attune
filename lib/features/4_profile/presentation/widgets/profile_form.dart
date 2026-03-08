@@ -416,7 +416,7 @@ class _ProfileFormState extends State<ProfileForm> {
         ),
         child: Text(
           selectedDate != null
-              ? "${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}"
+              ? "${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}"
               : '',
           style: TextStyle(
             color: enabled ? null : Theme.of(context).disabledColor,
@@ -434,7 +434,7 @@ class _ProfileFormState extends State<ProfileForm> {
     required Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: items.contains(value) ? value : null,
+      initialValue: items.contains(value) ? value : null,
       onChanged: enabled ? onChanged : null,
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       decoration: InputDecoration(

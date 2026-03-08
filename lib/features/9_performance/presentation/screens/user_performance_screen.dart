@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:attune/core/models/evaluation_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
-import 'package:attune/core/models/user_model.dart'; // Import User model if needed
+// Import User model if needed
 import 'package:intl/intl.dart';
 
 class UserPerformanceScreen extends StatelessWidget {

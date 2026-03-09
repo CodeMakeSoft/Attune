@@ -1,14 +1,14 @@
+import 'package:attune/core/models/user_model.dart' as model;
 import 'package:flutter/material.dart';
 import 'package:attune/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/core/widgets/loading_screen.dart';
 
 class AttendanceScreen extends StatefulWidget {
-  const AttendanceScreen({super.key});
+  final model.User currentUser;
+  const AttendanceScreen({super.key, required this.currentUser});
 
   @override
   State<AttendanceScreen> createState() => _AttendanceScreenState();
@@ -16,47 +16,22 @@ class AttendanceScreen extends StatefulWidget {
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  bool _isLoading = true;
-  String? _userId;
-  String? _companyId;
+  bool _isLoading = false;
 
   // Stream var to prevent rebuilding
-  Stream<List<Map<String, dynamic>>>? _attendanceStream;
+  late Stream<List<Map<String, dynamic>>> _attendanceStream;
 
   @override
   void initState() {
     super.initState();
-    _loadUserAndLogs();
-  }
-
-  Future<void> _loadUserAndLogs() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    _userId = user.uid;
-    
-    try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(_userId).get();
-      if (userDoc.exists) {
-        final data = userDoc.data();
-        _companyId = data?['currentCompanyId'] ?? '';
-      }
-    } catch (e) {
-      debugPrint("Error loading user: $e");
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        if (_userId != null) {
-          _attendanceStream = _firestoreService.getUserAttendance(_userId!);
-        }
-      });
-    }
+    _attendanceStream = _firestoreService.getUserAttendance(widget.currentUser.uid);
   }
 
   Future<void> _handleCheckInOut() async {
-     if (_userId == null || _companyId == null || _companyId!.isEmpty) {
+    final userId = widget.currentUser.uid;
+    final companyId = widget.currentUser.companyId;
+
+     if (companyId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No tienes una empresa asignada.')),
       );
@@ -72,14 +47,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _performCheckIn();
+                _performCheckIn(userId, companyId);
               },
               child: const Text("ENTRADA"),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _performCheckOut();
+                _performCheckOut(userId);
               },
               child: const Text("SALIDA"),
             ),
@@ -88,13 +63,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
   }
 
-  Future<void> _performCheckIn() async {
-     await _firestoreService.logCheckIn(_userId!, _companyId!);
+  Future<void> _performCheckIn(String userId, String companyId) async {
+     await _firestoreService.logCheckIn(userId, companyId);
      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Entrada Registrada')));
   }
 
-  Future<void> _performCheckOut() async {
-     await _firestoreService.logCheckOut(_userId!);
+  Future<void> _performCheckOut(String userId) async {
+     await _firestoreService.logCheckOut(userId);
      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Salida Registrada')));
   }
 
@@ -204,8 +179,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       
                       Builder(
                         builder: (context) {
-                          if (_attendanceStream == null) return const SizedBox();
-
                           return StreamBuilder<List<Map<String, dynamic>>>(
                             stream: _attendanceStream,
                             builder: (context, snapshot) {

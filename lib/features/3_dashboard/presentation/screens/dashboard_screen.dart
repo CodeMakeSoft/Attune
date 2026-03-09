@@ -11,7 +11,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final User currentUser;
+  const DashboardScreen({super.key, required this.currentUser});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -21,97 +22,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final AuthService _authService = AuthService();
   
-  Future<User?>? _userFuture;
-  @override
-  void initState() {
-    super.initState();
-  
-    _loadUserData();
-  }
-
-  void _loadUserData() {
-    setState(() {
-      _userFuture = _firestoreService.getUserData();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<User?>(
-      future: _userFuture,
-      builder: (context, snapshot) {
-        
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingScreen();
-        }
+    final appUser = widget.currentUser;
 
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-          _authService.signOut(); 
-          return const LoadingScreen();
-        }
-
-        final appUser = snapshot.data!;
-
-        // Si el usuario no tiene ninguna empresa asignada, lo redirigimos a crear una.
-        if (appUser.companies.isEmpty && appUser.companyId.isEmpty) {
-          
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const CreateCompanyScreen(),
-              ),
-            ).then((result) {
-              if (result == true) {
-                _loadUserData();
-              }
-            });
-          });
-          
-          return const LoadingScreen();
-        }
-        
-        if (appUser.companyId.isEmpty) {
-          return Scaffold(
-            appBar: AppBar(actions: [IconButton(icon: const Icon(Icons.logout), onPressed: _authService.signOut)]),
-            body: const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text(
-                  'Error: Tu cuenta no está vinculada a ninguna empresa. Por favor, contacta a tu administrador.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          );
-        }
-
-        Widget dashboardView;
-        switch (appUser.role) {
-          case 'admin':
-            dashboardView = AdminDashboardView(currentUser: appUser);
-            break;
-          case 'super_admin':
-            dashboardView = SuperAdminDashboardView(currentUser: appUser);
-            break;
-          case 'user':
-          default:
-            dashboardView = UserDashboardView(currentUser: appUser);
-            break;
-        }
-
-        return Column(
-          children: [
-            // --- 1. Custom Header Moderno ---
-            _buildModernHeader(context, appUser),
-
-            // --- 2. El contenido (Dashboard View) ---
-            // Usamos Expanded para que ocupe el resto del espacio
-            Expanded(
-              child: dashboardView,
-            ),
-          ],
+    // Si el usuario no tiene ninguna empresa asignada, lo redirigimos a crear una.
+    if (appUser.companies.isEmpty && appUser.companyId.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const CreateCompanyScreen(),
+          ),
         );
-      },
+      });
+      
+      return const LoadingScreen();
+    }
+    
+    if (appUser.companyId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(actions: [IconButton(icon: const Icon(Icons.logout), onPressed: _authService.signOut)]),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Text(
+              'Error: Tu cuenta no está vinculada a ninguna empresa. Por favor, contacta a tu administrador.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget dashboardView;
+    switch (appUser.role) {
+      case 'admin':
+        dashboardView = AdminDashboardView(currentUser: appUser);
+        break;
+      case 'super_admin':
+        dashboardView = SuperAdminDashboardView(currentUser: appUser);
+        break;
+      case 'user':
+      default:
+        dashboardView = UserDashboardView(currentUser: appUser);
+        break;
+    }
+
+    return Column(
+      children: [
+        // --- 1. Custom Header Moderno ---
+        _buildModernHeader(context, appUser),
+
+        // --- 2. El contenido (Dashboard View) ---
+        Expanded(
+          child: dashboardView,
+        ),
+      ],
     );
   }
 
@@ -228,7 +194,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.pop(context); 
               if (!isSelected) {
                 await _firestoreService.switchCompany(companyId);
-                _loadUserData(); 
               }
             },
             child: Row(

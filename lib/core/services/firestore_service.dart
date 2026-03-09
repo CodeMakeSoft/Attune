@@ -131,6 +131,18 @@ class FirestoreService {
     }
   }
 
+  Stream<User?> getUserStream() {
+    final fbAuth.User? authUser = _auth.currentUser;
+    if (authUser == null) return Stream.value(null);
+
+    return _db.collection('users').doc(authUser.uid).snapshots().map((doc) {
+      if (doc.exists) {
+        return User.fromFirestore(doc);
+      }
+      return null;
+    });
+  }
+
   Future<bool> createCompany({
     required String companyName,
     String? rfc,
@@ -272,6 +284,17 @@ class FirestoreService {
       return true;
     } catch (e) {
       log('Error al actualizar usuario: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  Future<bool> updateUserFields(String uid, Map<String, dynamic> data) async {
+    try {
+      await _db.collection('users').doc(uid).update(data);
+      log('Campos de usuario actualizados exitosamente.', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al actualizar campos de usuario: $e', name: 'FirestoreService');
       return false;
     }
   }

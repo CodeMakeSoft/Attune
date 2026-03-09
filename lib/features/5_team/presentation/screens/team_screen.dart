@@ -1,0 +1,325 @@
+import 'package:flutter/material.dart';
+import 'package:attune/core/models/user_model.dart';
+import 'package:attune/core/services/firestore_service.dart';
+import 'package:attune/utils/app_colors.dart';
+import 'package:intl/intl.dart';
+
+class TeamScreen extends StatefulWidget {
+  final User currentUser;
+  const TeamScreen({super.key, required this.currentUser});
+
+  @override
+  State<TeamScreen> createState() => _TeamScreenState();
+}
+
+class _TeamScreenState extends State<TeamScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+  String _searchQuery = '';
+  bool get _isAdmin => widget.currentUser.role == 'admin' || widget.currentUser.role == 'super_admin';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mi Equipo'),
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // Barra de Búsqueda
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Buscar por nombre...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: AppColors.backgroundSubtle,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
+          
+          Expanded(
+            child: StreamBuilder<List<User>>(
+              stream: _firestoreService.getEmployees(widget.currentUser.companyId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error al cargar empleados'));
+                }
+                
+                final employees = snapshot.data ?? [];
+                final filteredEmployees = employees.where((e) {
+                  return e.name.toLowerCase().contains(_searchQuery);
+                }).toList();
+                
+                if (filteredEmployees.isEmpty) {
+                  return const Center(child: Text('No se encontraron empleados'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: filteredEmployees.length,
+                  itemBuilder: (context, index) {
+                    final employee = filteredEmployees[index];
+                    return _buildEmployeeCard(employee);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmployeeCard(User employee) {
+    // Determinar rol dentro de la empresa actual
+    final String role = employee.companies[widget.currentUser.companyId]?['role'] ?? 'user';
+    final bool isSelectedEmployeeAdmin = role == 'admin' || role == 'super_admin';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.borderDefault),
+      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          radius: 25,
+          backgroundColor: AppColors.accentPrimary.withOpacity(0.1),
+          backgroundImage: employee.photoUrl != null && employee.photoUrl!.isNotEmpty
+              ? NetworkImage(employee.photoUrl!)
+              : null,
+          child: employee.photoUrl == null || employee.photoUrl!.isEmpty
+              ? Text(
+                  employee.name.isNotEmpty ? employee.name[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    color: AppColors.accentPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                )
+              : null,
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                employee.name,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            if (isSelectedEmployeeAdmin)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.accentPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Admin',
+                  style: TextStyle(
+                    color: AppColors.accentPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              employee.position ?? 'Sin puesto asignado',
+              style: TextStyle(color: AppColors.contentSecondary, fontSize: 13),
+            ),
+            Text(
+              employee.department ?? 'Sin departamento',
+              style: TextStyle(color: AppColors.contentSecondary.withOpacity(0.7), fontSize: 12),
+            ),
+          ],
+        ),
+        trailing: _isAdmin 
+          ? IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => _showEditEmployeeDialog(employee),
+            )
+          : null,
+        onTap: () => _showEmployeeDetails(employee),
+      ),
+    );
+  }
+
+  void _showEmployeeDetails(User employee) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          minChildSize: 0.4,
+          expand: false,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundColor: AppColors.accentPrimary.withOpacity(0.1),
+                        backgroundImage: employee.photoUrl != null && employee.photoUrl!.isNotEmpty
+                            ? NetworkImage(employee.photoUrl!)
+                            : null,
+                        child: employee.photoUrl == null || employee.photoUrl!.isEmpty
+                            ? Text(
+                                employee.name.isNotEmpty ? employee.name[0].toUpperCase() : '?',
+                                style: TextStyle(
+                                  color: AppColors.accentPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 32,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              employee.name,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              employee.position ?? 'Puesto no asignado',
+                              style: TextStyle(fontSize: 16, color: AppColors.accentPrimary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  _buildDetailRow(Icons.email_outlined, 'Email', employee.email),
+                  _buildDetailRow(Icons.phone_outlined, 'Teléfono', employee.phone ?? 'No registrado'),
+                  _buildDetailRow(Icons.business_outlined, 'Departamento', employee.department ?? 'No asignado'),
+                  _buildDetailRow(Icons.calendar_today_outlined, 'Fecha de ingreso', 
+                    employee.hireDate != null ? DateFormat('dd/MM/yyyy').format(employee.hireDate!.toDate()) : 'No registrada'),
+                  _buildDetailRow(Icons.assignment_ind_outlined, 'Tipo de contrato', employee.contractType ?? 'No registrado'),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.contentSecondary, size: 20),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(color: AppColors.contentSecondary, fontSize: 12)),
+              Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditEmployeeDialog(User employee) {
+    // Solo admins pueden editar. Implementaremos un diálogo rápido para actualizar puesto y depto.
+    final TextEditingController positionController = TextEditingController(text: employee.position);
+    final TextEditingController departmentController = TextEditingController(text: employee.department);
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Editar: ${employee.name.split(' ')[0]}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: positionController,
+                decoration: const InputDecoration(labelText: 'Puesto / Cargo'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: departmentController,
+                decoration: const InputDecoration(labelText: 'Departamento'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final Map<String, dynamic> updateData = {
+                  'position': positionController.text,
+                  'department': departmentController.text,
+                };
+                
+                await _firestoreService.updateUserFields(employee.uid, updateData);
+                
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Empleado actualizado correctamente')),
+                  );
+                }
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

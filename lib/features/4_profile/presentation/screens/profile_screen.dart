@@ -6,7 +6,8 @@ import 'package:attune/features/4_profile/presentation/widgets/profile_form.dart
 import 'package:attune/core/services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final User currentUser;
+  const ProfileScreen({super.key, required this.currentUser});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -24,19 +25,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    _user = widget.currentUser;
+    _loadCompanyData();
   }
 
-  Future<void> _loadUser() async {
+  Future<void> _loadCompanyData() async {
     setState(() => _isLoading = true);
-    final user = await _firestoreService.getUserData();
     
     List<String> depts = [];
     List<String> pos = [];
 
-    // Si el usuario pertenece a una empresa, obtenemos sus departamentos y puestos
-    if (user != null && user.currentCompanyId.isNotEmpty) {
-      final docSn = await _firestoreService.getCompanyStream(user.currentCompanyId).first;
+    if (_user!.currentCompanyId.isNotEmpty) {
+      final docSn = await _firestoreService.getCompanyStream(_user!.currentCompanyId).first;
       if (docSn.exists) {
          final data = docSn.data() as Map<String, dynamic>;
          if (data['departments'] != null) {
@@ -50,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (mounted) {
       setState(() {
-        _user = user;
         _departments = depts;
         _positions = pos;
         _isLoading = false;

@@ -161,13 +161,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-              
-              // Botón de Logout (Temporal, luego perfil o notificaciones)
-              IconButton(
-                onPressed: _authService.signOut,
-                icon: const Icon(Icons.logout, color: Colors.white),
-                tooltip: 'Cerrar Sesión',
-              ),
             ],
           ),
           

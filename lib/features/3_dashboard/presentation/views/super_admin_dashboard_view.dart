@@ -22,17 +22,6 @@ class SuperAdminDashboardView extends StatelessWidget {
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       children: [
-        // Basado en tu mockup "¡Hola Super Admin!"
-        DashboardGridButton(
-          icon: FontAwesomeIcons.solidUser,
-          label: 'Mi Perfil',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          },
-        ),
         DashboardGridButton(
           icon: FontAwesomeIcons.sitemap,
           label: 'Deptos. y Roles',

@@ -60,6 +60,7 @@ class _ProfileFormState extends State<ProfileForm> {
   String? _selectedPosition;
 
   // Legal Controllers
+  late TextEditingController _phoneController;
   late TextEditingController _rfcController;
   late TextEditingController _curpController;
   late TextEditingController _nssController;
@@ -75,6 +76,7 @@ class _ProfileFormState extends State<ProfileForm> {
     
     // Personal
     _nameController = TextEditingController(text: user?.name ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
     _emergencyContactNameController = TextEditingController(text: user?.emergencyContact['name'] ?? '');
     _emergencyContactPhoneController = TextEditingController(text: user?.emergencyContact['phone'] ?? '');
     
@@ -105,6 +107,7 @@ class _ProfileFormState extends State<ProfileForm> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _emergencyContactNameController.dispose();
     _emergencyContactPhoneController.dispose();
     _departmentController.dispose();
@@ -117,11 +120,11 @@ class _ProfileFormState extends State<ProfileForm> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-       // Logic to prioritize dropdown value/controller
-       final dept = widget.availableDepartments.isNotEmpty ? _selectedDepartment : _departmentController.text;
-       final pos = widget.availablePositions.isNotEmpty ? _selectedPosition : _positionController.text;
+      FocusScope.of(context).unfocus();
+      final dept = widget.availableDepartments.isNotEmpty ? _selectedDepartment : _departmentController.text;
+      final pos = widget.availablePositions.isNotEmpty ? _selectedPosition : _positionController.text;
        
-       final fullUpdatedUser = User(
+      final fullUpdatedUser = User(
         uid: widget.user!.uid,
         email: widget.user!.email,
         companies: widget.user!.companies,
@@ -130,22 +133,23 @@ class _ProfileFormState extends State<ProfileForm> {
         currentCompanyId: widget.user!.currentCompanyId,
         status: widget.user!.status,
         createdAt: widget.user!.createdAt,
-        name: _nameController.text,
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
         photoUrl: widget.user!.photoUrl,
         birthday: _birthday != null ? Timestamp.fromDate(_birthday!) : null,
         gender: _gender,
         emergencyContact: {
-          'name': _emergencyContactNameController.text,
-          'phone': _emergencyContactPhoneController.text,
+          'name': _emergencyContactNameController.text.trim(),
+          'phone': _emergencyContactPhoneController.text.trim(),
         },
         department: dept ?? '',
         position: pos ?? '',
         contractType: _contractType,
         hireDate: _hireDate != null ? Timestamp.fromDate(_hireDate!) : null,
-        rfc: _rfcController.text,
-        curp: _curpController.text,
-        nss: _nssController.text,
-       );
+        rfc: _rfcController.text.toUpperCase().trim(),
+        curp: _curpController.text.toUpperCase().trim(),
+        nss: _nssController.text.trim(),
+      );
 
       widget.onSave(fullUpdatedUser);
     }
@@ -218,7 +222,27 @@ class _ProfileFormState extends State<ProfileForm> {
           controller: _nameController,
           enabled: enabled,
           icon: FontAwesomeIcons.signature,
-          validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Requerido';
+            if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(v)) {
+              return 'El nombre solo debe contener letras';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          label: "Teléfono",
+          controller: _phoneController,
+          enabled: enabled,
+          icon: FontAwesomeIcons.phone,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Requerido';
+            if (!RegExp(r'^[0-9]+$').hasMatch(v)) {
+              return 'El teléfono solo debe contener números';
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
         _buildDatePicker(
@@ -251,6 +275,13 @@ class _ProfileFormState extends State<ProfileForm> {
           enabled: enabled,
           icon: FontAwesomeIcons.phone,
           keyboardType: TextInputType.phone,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Requerido';
+            if (!RegExp(r'^[0-9]{10}$').hasMatch(v)) {
+              return 'El teléfono debe tener 10 dígitos';
+            } 
+            return null;
+          },
         ),
       ],
     );
@@ -340,6 +371,14 @@ class _ProfileFormState extends State<ProfileForm> {
                 controller: _rfcController,
                 enabled: enabled,
                 icon: FontAwesomeIcons.passport,
+                validator: (v) {
+                  if (v != null && v.trim().isNotEmpty) {
+                    if (!RegExp(r'^[A-Z0-9]{12,13}$').hasMatch(v.toUpperCase())) {
+                      return 'RFC inválido';
+                    }
+                  }
+                  return null;
+                },
               ),
             ),
           ],
@@ -353,6 +392,15 @@ class _ProfileFormState extends State<ProfileForm> {
                 controller: _curpController,
                 enabled: enabled,
                 icon: FontAwesomeIcons.fingerprint,
+                validator: (v) {
+                  if (v != null && v.trim().isNotEmpty) {
+                    // 4 Letras, 6 Números, 6 Letras, 2 Letras/Números
+                    if (!RegExp(r'^[A-Z]{4}[0-9]{6}[A-Z]{6}[A-Z0-9]{2}$').hasMatch(v.toUpperCase())) {
+                      return 'CURP inválida';
+                    }
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(width: 16),
@@ -362,6 +410,15 @@ class _ProfileFormState extends State<ProfileForm> {
                 controller: _nssController,
                 enabled: enabled,
                 icon: FontAwesomeIcons.notesMedical,
+                validator: (v) {
+                  if (v != null && v.trim().isNotEmpty) {
+                    // Exactamente 11 dígitos numéricos
+                    if (!RegExp(r'^[0-9]{11}$').hasMatch(v)) {
+                      return 'NSS debe tener 11 dígitos';
+                    }
+                  }
+                  return null;
+                },
               ),
             ),
           ],

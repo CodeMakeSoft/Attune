@@ -22,17 +22,6 @@ class UserDashboardView extends StatelessWidget {
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       children: [
-        // Basado en tu mockup "¡Hola User!"
-        DashboardGridButton(
-          icon: FontAwesomeIcons.solidUser,
-          label: 'Mi Perfil',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          },
-        ),
         DashboardGridButton(
           icon: FontAwesomeIcons.fileInvoiceDollar, // Finanzas
           label: 'Finanzas',

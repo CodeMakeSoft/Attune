@@ -17,7 +17,6 @@ class FirestoreService {
     final userDocRef = _db.collection('users').doc(authUser.uid);
     var userDocSnapshot = await userDocRef.get();
 
-    // --- 1. USUARIO EXISTENTE ---
     if (userDocSnapshot.exists) {
       log('Usuario existente encontrado.', name: 'FirestoreService');
       User user = User.fromFirestore(userDocSnapshot);
@@ -44,8 +43,6 @@ class FirestoreService {
         if (user.companies.length < limit) {
           final batch = _db.batch();
           
-          // Agregamos la nueva empresa al mapa
-          // Nota: Usamos notación de punto para actualizar campos anidados en mapas de Firestore
           batch.update(userDocRef, {
             'companies.$newCompanyId': newRole,
             'companyIds': FieldValue.arrayUnion([newCompanyId]),
@@ -63,9 +60,6 @@ class FirestoreService {
         }
       }
 
-      
-      // --- SYNC AUTH DATA ---
-      // Check if photoUrl needs to be updated from Auth
       if (authUser.photoURL != null && authUser.photoURL != user.photoUrl) {
          log('Syncing photoUrl from Auth to Firestore...', name: 'FirestoreService');
          await userDocRef.update({'photoUrl': authUser.photoURL});
@@ -76,14 +70,12 @@ class FirestoreService {
       return user;
     } 
     
-    // --- 2. USUARIO NUEVO ---
     else {
       final emailKey = authUser.email!.trim().toLowerCase();
       final invitationDocRef = _db.collection('invitations').doc(emailKey);
       final invitationDocSnapshot = await invitationDocRef.get();
 
       if (invitationDocSnapshot.exists) {
-        // 2.1 NUEVO USUARIO INVITADO
         log('Invitación encontrada para usuario NUEVO.', name: 'FirestoreService');
         final invitationData = invitationDocSnapshot.data()!;
         
@@ -116,7 +108,6 @@ class FirestoreService {
         return User.fromFirestore(userDocSnapshot);
 
       } else {
-        // 2.2 NUEVO SUPER ADMIN
         log('Usuario nuevo sin invitación. Creando perfil Super Admin...', name: 'FirestoreService');
         
         final newUserData = {
@@ -260,11 +251,9 @@ class FirestoreService {
 
   Future<bool> updateUser(User user) async {
     try {
-      // Map valid fields to update
-      // We do NOT update 'uid', 'email', 'createdAt', 'status', 'companies' etc here directly
-      // unless specifically required.
       final data = {
         'name': user.name,
+        'phone': user.phone,
         'photoUrl': user.photoUrl,
         'birthday': user.birthday,
         'gender': user.gender,
@@ -278,10 +267,6 @@ class FirestoreService {
         'nss': user.nss,
       };
 
-      // Remove nulls if you want to perform partial updates or keep them to unset? 
-      // Firestore update ignores fields not in the map? No, update updates the fields present.
-      // If value is null, it sets it to null in Firestore.
-      
       await _db.collection('users').doc(user.uid).update(data);
       log('Usuario actualizado exitosamente.', name: 'FirestoreService');
       return true;
@@ -291,8 +276,6 @@ class FirestoreService {
     }
   }
   // --- ORGANIZATION MANAGEMENT ---
-
-  // Obtener empleados de una empresa
   Stream<List<User>> getEmployees(String companyId) {
     return _db
         .collection('users')

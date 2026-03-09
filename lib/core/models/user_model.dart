@@ -18,6 +18,7 @@ class User {
 
   // Personal data
   final String name;
+  final String? phone;
   final String? photoUrl;
   final Timestamp? birthday;
   final String? gender;
@@ -71,6 +72,7 @@ class User {
     required this.status,
     required this.createdAt,
     required this.name,
+    this.phone,
     this.photoUrl,
     this.birthday,
     this.gender,
@@ -127,6 +129,7 @@ class User {
       createdAt: data['createdAt'] ?? Timestamp.now(),
 
       name: data['name'] ?? '',
+      phone: data['phone'] ?? '',
       photoUrl: data['photoUrl'],
       birthday: data['birthday'],
       gender: data['gender'],
@@ -145,6 +148,7 @@ class User {
 
   User copyWith({
     String? name,
+    String? phone,
     String? photoUrl,
     Timestamp? birthday,
     String? gender,
@@ -163,6 +167,7 @@ class User {
       status: status,
       createdAt: createdAt,
       name: name ?? this.name,
+      phone: phone ?? this.phone,
       photoUrl: photoUrl ?? this.photoUrl,
       birthday: birthday ?? this.birthday,
       gender: gender ?? this.gender,

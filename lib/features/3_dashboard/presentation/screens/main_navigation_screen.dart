@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:attune/utils/app_colors.dart';
 import 'package:attune/features/3_dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:attune/features/10_attendance/presentation/screens/attendance_screen.dart';
+import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,43 +19,46 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const DashboardScreen(), // Index 0: Inicio
     const AttendanceScreen(), // Index 1: Asistencia
     const Center(child: Text("Pantalla Equipo")), // Index 2: Placeholder
-    const Center(child: Text("Pantalla Perfil")), // Index 3: Placeholder
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // CLAVE: Permite que el contenido baje tras la barra
-      
+      resizeToAvoidBottomInset: false,
+      backgroundColor: AppColors.backgroundPrimary,
       body: _pages[_currentIndex],
 
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20), // Margen para flotar
-        height: 70,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9), // Fondo semitransparente
-          borderRadius: BorderRadius.circular(40),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(40),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildNavItem(0, Icons.grid_view_rounded),
-                _buildNavItem(1, Icons.access_time_filled_rounded),
-                _buildNavItem(2, Icons.group_rounded),
-                _buildNavItem(3, Icons.person_rounded),
-              ],
+      bottomNavigationBar: 
+      SafeArea(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 20), // Margen para flotar
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9), // Fondo semitransparente
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(40),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(0, Icons.grid_view_rounded),
+                  _buildNavItem(1, Icons.access_time_filled_rounded),
+                  _buildNavItem(2, Icons.group_rounded),
+                  _buildNavItem(3, Icons.person_rounded),
+                ],
+              ),
             ),
           ),
         ),

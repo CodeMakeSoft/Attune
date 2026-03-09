@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
 import 'package:attune/features/6_permissions/presentation/screens/leave_request_screen.dart';
+import 'package:attune/features/7_events/presentation/screens/events_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 
@@ -84,7 +85,10 @@ class AdminDashboardView extends StatelessWidget {
           icon: FontAwesomeIcons.calendarWeek,
           label: 'Eventos',
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Eventos', icon: FontAwesomeIcons.calendarWeek)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => EventsScreen(currentUser: currentUser)),
+            );
           },
         ),
         DashboardGridButton(

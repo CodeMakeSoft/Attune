@@ -424,4 +424,39 @@ class FirestoreService {
       return false;
     }
   }
+
+  // --- EVENTS (EVENTOS Y COMUNICADOS) ---
+
+  // 1. Crear un nuevo evento (Solo Admin/SuperAdmin)
+  Future<bool> createEvent(Map<String, dynamic> eventData) async {
+    try {
+      await _db.collection('events').add(eventData);
+      log('Evento creado con éxito.', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al crear evento: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  // 2. Obtener los eventos de la empresa
+  Stream<QuerySnapshot> getEvents(String companyId) {
+    // Nota: Por ahora NO usamos orderBy para no requerir un índice compuesto en Firebase de inmediato.
+    return _db
+        .collection('events')
+        .where('companyId', isEqualTo: companyId)
+        .snapshots();
+  }
+
+  // 3. Editar un evento (Solo Admin/SuperAdmin)
+  Future<bool> updateEvent(String eventId, Map<String, dynamic> eventData) async {
+    try {
+      await _db.collection('events').doc(eventId).update(eventData);
+      log('Evento actualizado con éxito.', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al actualizar evento: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
 }

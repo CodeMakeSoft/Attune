@@ -381,4 +381,47 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
+
+  // --- LEAVE REQUESTS (PERMISOS Y VACACIONES) ---
+
+  // 1. Empleado crea una nueva solicitud
+  Future<bool> createLeaveRequest(Map<String, dynamic> requestData) async {
+    try {
+      await _db.collection('leave_requests').add(requestData);
+      log('Solicitud de permiso enviada con éxito.', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al enviar solicitud de permiso: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  // 2. Obtener solicitudes (Si isAdmin = true, trae todas las de la empresa. Si no, solo las del usuario)
+  Stream<QuerySnapshot> getLeaveRequests({
+    required String companyId, 
+    required bool isAdmin, 
+    required String currentUserId
+  }) {
+    // Referencia base a la colección
+    Query query = _db.collection('leave_requests').where('companyId', isEqualTo: companyId);
+
+    if (!isAdmin) {
+      query = query.where('userId', isEqualTo: currentUserId);
+    }
+
+    return query.orderBy('createdAt', descending: true).snapshots();
+  }
+
+  Future<bool> updateLeaveRequestStatus(String requestId, String newStatus) async {
+    try {
+      await _db.collection('leave_requests').doc(requestId).update({
+        'status': newStatus,
+      });
+      log('Estado de la solicitud actualizado a: $newStatus', name: 'FirestoreService');
+      return true;
+    } catch (e) {
+      log('Error al actualizar estado del permiso: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
 }

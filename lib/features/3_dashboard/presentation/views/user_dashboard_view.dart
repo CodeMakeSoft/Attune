@@ -7,6 +7,7 @@ import 'package:attune/features/4_profile/presentation/screens/profile_screen.da
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/user_performance_screen.dart';
 import 'package:attune/features/10_attendance/presentation/screens/user_attendance_screen.dart';
+import 'package:attune/features/6_permissions/presentation/screens/leave_request_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 
@@ -48,7 +49,10 @@ class UserDashboardView extends StatelessWidget {
           icon: FontAwesomeIcons.filePen, // Permisos (Solicitar)
           label: 'Solicitar Permiso',
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Solicitar Permiso', icon: FontAwesomeIcons.filePen)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LeaveRequestScreen(currentUser: currentUser)),
+            );
           },
         ),
         DashboardGridButton(

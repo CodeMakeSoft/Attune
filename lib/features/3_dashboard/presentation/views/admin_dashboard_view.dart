@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
+import 'package:attune/features/6_permissions/presentation/screens/leave_request_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 
@@ -35,7 +36,10 @@ class AdminDashboardView extends StatelessWidget {
           icon: FontAwesomeIcons.clipboardCheck, // Icono para "Aprobar"
           label: 'Aprobar Permisos',
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Aprobar Permisos', icon: FontAwesomeIcons.clipboardCheck)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LeaveRequestScreen(currentUser: currentUser)),
+            );
           },
         ),
         DashboardGridButton(

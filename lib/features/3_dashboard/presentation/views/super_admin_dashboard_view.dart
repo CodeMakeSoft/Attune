@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
+import 'package:attune/features/6_permissions/presentation/screens/leave_request_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 
@@ -63,6 +64,16 @@ class SuperAdminDashboardView extends StatelessWidget {
                   },
                 ),
               ),
+            );
+          },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.clipboardCheck,
+          label: 'Aprobar Permisos',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LeaveRequestScreen(currentUser: currentUser)),
             );
           },
         ),

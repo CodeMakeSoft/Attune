@@ -1,3 +1,4 @@
+import 'package:attune/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:attune/core/models/company_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
@@ -37,7 +38,12 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Organización")),
+      backgroundColor: AppColors.backgroundPrimary,
+      appBar: AppBar(
+        title: const Text("Gestión de Organización"),
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: _firestoreService.getCompanyStream(_companyId!),
         builder: (context, snapshot) {
@@ -50,11 +56,22 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
             length: 2,
             child: Column(
               children: [
-                const TabBar(
-                  tabs: [
-                    Tab(text: "Departamentos"),
-                    Tab(text: "Puestos (Roles)"),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  color: Theme.of(context).primaryColor,
+                  child: TabBar(
+                    indicator: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    labelColor: Theme.of(context).primaryColor,
+                    unselectedLabelColor: Colors.white70,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    tabs: const [
+                      Tab(text: "Departamentos"),
+                      Tab(text: "Puestos"),
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: TabBarView(
@@ -63,12 +80,14 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
                         context, 
                         items: company.departments, 
                         title: "Departamento", 
+                        icon: Icons.business_center_rounded,
                         onSave: (newList) => _firestoreService.updateDepartments(_companyId!, newList),
                       ),
                       _buildListEditor(
                          context, 
                          items: company.jobTitles, 
                          title: "Puesto", 
+                         icon: Icons.badge_rounded,
                          onSave: (newList) => _firestoreService.updateJobTitles(_companyId!, newList),
                       ),
                     ],
@@ -86,38 +105,67 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
     BuildContext context, {
     required List<String> items,
     required String title,
+    required IconData icon,
     required Function(List<String>) onSave,
   }) {
     return Column(
       children: [
+        const SizedBox(height: 20),
         Expanded(
           child: items.isEmpty 
-          ? Center(child: Text("No hay ${title}s registrados"))
-          : ListView.separated(
+          ? _buildEmptyState(title)
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: items.length,
-              separatorBuilder: (c, i) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = items[index];
-                return ListTile(
-                  title: Text(item),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      _confirmDelete(context, item, () {
-                        final newList = List<String>.from(items);
-                        newList.removeAt(index);
-                        onSave(newList);
-                      });
-                    },
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentPrimary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: AppColors.accentPrimary, size: 24),
+                    ),
+                    title: Text(item, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                      onPressed: () {
+                        _confirmDelete(context, item, () {
+                          final newList = List<String>.from(items);
+                          newList.removeAt(index);
+                          onSave(newList);
+                        });
+                      },
+                    ),
                   ),
                 );
               },
             ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
+        Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
           child: ElevatedButton.icon(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_circle_outline_rounded),
             label: Text("Agregar $title"),
             onPressed: () {
               _showAddDialog(context, title, (newItem) {
@@ -129,7 +177,9 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
               });
             },
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
+              minimumSize: const Size(double.infinity, 55),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
             ),
           ),
         ),
@@ -137,20 +187,38 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
     );
   }
 
+  Widget _buildEmptyState(String title) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.layers_clear_outlined, size: 80, color: Colors.grey.withOpacity(0.3)),
+          const SizedBox(height: 16),
+          Text(
+            "No hay ${title}s registrados",
+            style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 18),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmDelete(BuildContext context, String item, VoidCallback onConfirm) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Confirmar eliminación"),
-        content: Text("¿Seguro que deseas eliminar '$item'?"),
+        content: Text("¿Seguro que deseas eliminar el $item de la lista?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               onConfirm();
             },
-            child: const Text("Eliminar", style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("Eliminar", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -162,10 +230,17 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Agregar $title"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Nuevo $title"),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(hintText: "Nombre del $title"),
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: "Ej. Ventas, Gerente...",
+            filled: true,
+            fillColor: AppColors.backgroundSubtle,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
           textCapitalization: TextCapitalization.sentences,
         ),
         actions: [

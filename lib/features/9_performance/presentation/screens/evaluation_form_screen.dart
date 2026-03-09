@@ -1,3 +1,4 @@
+import 'package:attune/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/models/evaluation_model.dart';
@@ -21,7 +22,6 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   
-  // Métricas estándar (pueden venir de config en el futuro)
   final Map<String, int> _scores = {
     'Responsabilidad': 0,
     'Calidad de Trabajo': 0,
@@ -30,12 +30,19 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
     'Iniciativa': 0,
   };
 
+  final Map<String, IconData> _metricIcons = {
+    'Responsabilidad': Icons.assignment_turned_in_rounded,
+    'Calidad de Trabajo': Icons.high_quality_rounded,
+    'Trabajo en Equipo': Icons.groups_rounded,
+    'Puntualidad': Icons.update_rounded,
+    'Iniciativa': Icons.lightbulb_outline_rounded,
+  };
+
   final _feedbackController = TextEditingController();
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     
-    // Validar que se hayan calificado todos los puntos (opcional, o asumir 0)
     if (_scores.values.any((s) => s == 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor califica todos los aspectos.')),
@@ -46,17 +53,16 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Calcular promedio
       double sum = _scores.values.fold(0, (prev, element) => prev + element);
       double average = sum / _scores.length;
 
       final evaluation = Evaluation(
-        id: '', // Firestore generará el ID
+        id: '',
         employeeId: widget.employee.uid,
         employeeName: widget.employee.name,
         evaluatorId: widget.evaluator.uid,
         evaluatorName: widget.evaluator.name,
-        companyId: widget.employee.companyId, // Asumimos misma empresa
+        companyId: widget.employee.companyId,
         date: DateTime.now(),
         scores: _scores,
         overallAverage: average,
@@ -67,7 +73,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Evaluación guardada correctamente.')),
+          const SnackBar(content: Text('✅ Evaluación guardada correctamente.')),
         );
         Navigator.pop(context);
       }
@@ -80,92 +86,168 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
     }
   }
 
-  Widget _buildStarRating(String metric) {
+  Widget _buildMetricTile(String metric) {
     int currentScore = _scores[metric] ?? 0;
+    IconData icon = _metricIcons[metric] ?? Icons.star_rounded;
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(metric, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(5, (index) {
-            return IconButton(
-              icon: Icon(
-                index < currentScore ? Icons.star : Icons.star_border,
-                color: Colors.amber,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.accentPrimary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                metric, 
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              onPressed: () {
-                setState(() {
-                  _scores[metric] = index + 1;
-                });
-              },
-            );
-          }),
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(5, (index) {
+              bool isSelected = index < currentScore;
+              return GestureDetector(
+                onTap: () => setState(() => _scores[metric] = index + 1),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.accentPrimary.withOpacity(0.1) : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: isSelected ? Colors.amber[700] : Colors.grey[300],
+                    size: 32,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Evaluar Desempeño')),
+      backgroundColor: AppColors.backgroundPrimary,
+      appBar: AppBar(
+        title: const Text('Realizar Evaluación'),
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           children: [
-            // Cabecera Empleado
-            ListTile(
-              leading: CircleAvatar(
-                backgroundImage: widget.employee.photoUrl != null
-                    ? NetworkImage(widget.employee.photoUrl!)
-                    : null,
-                child: widget.employee.photoUrl == null
-                    ? const Icon(Icons.person)
-                    : null,
+            // Header con info del empleado mejorada
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Theme.of(context).primaryColor, const Color(0xFF1E40AF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
               ),
-              title: Text(widget.employee.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(widget.employee.position ?? 'Sin puesto'),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white24,
+                    backgroundImage: widget.employee.photoUrl != null
+                        ? NetworkImage(widget.employee.photoUrl!)
+                        : null,
+                    child: widget.employee.photoUrl == null
+                        ? const Icon(Icons.person, color: Colors.white, size: 30)
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.employee.name,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        Text(
+                          widget.employee.position ?? 'Sin puesto',
+                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const Divider(height: 30),
+            
+            const SizedBox(height: 32),
             
             const Text(
-              "Califica los siguientes aspectos:",
+              "Indicadores de Desempeño",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            ..._scores.keys.map((metric) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: _buildStarRating(metric),
-            )),
+            ..._scores.keys.map((metric) => _buildMetricTile(metric)),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            
+            const Text(
+              "Observaciones Finales",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
             
             TextFormField(
               controller: _feedbackController,
-              decoration: const InputDecoration(
-                labelText: 'Comentarios / Feedback',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: 'Escribe aquí tus comentarios sobre el desempeño del colaborador...',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                ),
                 alignLabelWithHint: true,
               ),
               maxLines: 4,
-              validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+              validator: (val) => val == null || val.isEmpty ? 'Por favor ingresa un comentario' : null,
             ),
             
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
             
             ElevatedButton(
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                minimumSize: const Size(double.infinity, 55),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
               child: _isLoading 
-                ? const CircularProgressIndicator(color: Colors.white) 
-                : const Text("Guardar Evaluación"),
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                : const Text("Finalizar Evaluación", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

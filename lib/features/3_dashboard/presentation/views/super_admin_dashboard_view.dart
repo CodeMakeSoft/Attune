@@ -11,6 +11,8 @@ import 'package:attune/features/6_permissions/presentation/screens/leave_request
 import 'package:attune/features/7_events/presentation/screens/events_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
+import 'package:attune/features/12_memberships/presentation/screens/memberships_screen.dart';
+import 'package:attune/features/13_support/presentation/screens/support_screen.dart';
 
 class SuperAdminDashboardView extends StatelessWidget {
   final User currentUser;
@@ -82,7 +84,7 @@ class SuperAdminDashboardView extends StatelessWidget {
           icon: FontAwesomeIcons.solidGem, // Membresía
           label: 'Membresía',
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Membresía', icon: FontAwesomeIcons.solidGem)));
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const MembershipsScreen()));
           },
         ),
         DashboardGridButton(
@@ -113,7 +115,7 @@ class SuperAdminDashboardView extends StatelessWidget {
           icon: FontAwesomeIcons.solidCircleQuestion,
           label: 'Soporte',
           onPressed: () {
-             Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Soporte', icon: FontAwesomeIcons.solidCircleQuestion)));
+             Navigator.push(context, MaterialPageRoute(builder: (c) => const SupportScreen()));
           },
         ),
       ],

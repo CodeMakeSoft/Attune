@@ -11,6 +11,7 @@ import 'package:attune/features/6_permissions/presentation/screens/leave_request
 import 'package:attune/features/7_events/presentation/screens/events_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
+import 'package:attune/features/13_support/presentation/screens/support_screen.dart';
 
 class UserDashboardView extends StatelessWidget {
   final User currentUser;
@@ -87,7 +88,7 @@ class UserDashboardView extends StatelessWidget {
           icon: FontAwesomeIcons.solidCircleQuestion,
           label: 'Soporte',
           onPressed: () {
-             Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericPlaceholderScreen(title: 'Soporte', icon: FontAwesomeIcons.solidCircleQuestion)));
+             Navigator.push(context, MaterialPageRoute(builder: (c) => const SupportScreen()));
           },
         ),
       ],

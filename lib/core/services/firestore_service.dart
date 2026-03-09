@@ -43,9 +43,15 @@ class FirestoreService {
         if (user.companies.length < limit) {
           final batch = _db.batch();
           
+          final companyEntry = {
+            'role': newRole,
+            'name': invitationData['companyName'] ?? 'Empresa'
+          };
+
           batch.update(userDocRef, {
-            'companies.$newCompanyId': newRole,
+            'companies.$newCompanyId': companyEntry,
             'companyIds': FieldValue.arrayUnion([newCompanyId]),
+            'currentCompanyId': newCompanyId, // Auto-cambiar a la empresa invitada
           });
           
           batch.delete(invitationDocRef);
@@ -124,6 +130,7 @@ class FirestoreService {
         };
 
         await userDocRef.set(newUserData);
+        await invitationDocRef.delete(); // Limpiar invitación consumida
         
         userDocSnapshot = await userDocRef.get();
         return User.fromFirestore(userDocSnapshot);
@@ -141,6 +148,10 @@ class FirestoreService {
       }
       return null;
     });
+  }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 
   Future<bool> createCompany({
@@ -409,6 +420,40 @@ class FirestoreService {
       });
     } catch (e) {
       log('Error al actualizar prestaciones del empleado: $e', name: 'FirestoreService');
+      rethrow;
+    }
+  }
+
+  Future<void> removeEmployeeFromCompany(String userId, String companyId) async {
+    try {
+      final userDocRef = _db.collection('users').doc(userId);
+      final docSn = await userDocRef.get();
+      
+      if (!docSn.exists) return;
+      
+      final data = docSn.data() as Map<String, dynamic>;
+      final companies = Map<String, dynamic>.from(data['companies'] ?? {});
+      final companyIds = List<String>.from(data['companyIds'] ?? []);
+      
+      // 1. Eliminar de las listas de acceso
+      companies.remove(companyId);
+      companyIds.remove(companyId);
+      
+      // 2. Si era su empresa actual, limpiar o cambiar a otra si existe
+      String currentCompany = data['currentCompanyId'] ?? '';
+      if (currentCompany == companyId) {
+        currentCompany = companyIds.isNotEmpty ? companyIds.first : '';
+      }
+      
+      await userDocRef.update({
+        'companies': companies,
+        'companyIds': companyIds,
+        'currentCompanyId': currentCompany,
+      });
+      
+      log('Empleado $userId eliminado de la empresa $companyId', name: 'FirestoreService');
+    } catch (e) {
+      log('Error al eliminar empleado de la empresa: $e', name: 'FirestoreService');
       rethrow;
     }
   }

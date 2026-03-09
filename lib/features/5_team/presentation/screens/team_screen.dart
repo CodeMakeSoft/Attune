@@ -16,7 +16,17 @@ class TeamScreen extends StatefulWidget {
 class _TeamScreenState extends State<TeamScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   String _searchQuery = '';
-  bool get _isAdmin => widget.currentUser.role == 'admin' || widget.currentUser.role == 'super_admin';
+  bool get _isAdmin {
+    final role = widget.currentUser.role.toLowerCase();
+    print("--- DEBUG TEAM SCREEN ---");
+    print("Rol detectado: $role");
+    print("Company ID: ${widget.currentUser.companyId}");
+    
+    return role == 'admin' || 
+           role == 'superadmin' || 
+           role == 'super_admin' || 
+           widget.currentUser.ownedCompanies.contains(widget.currentUser.companyId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +192,9 @@ class _TeamScreenState extends State<TeamScreen> {
           minChildSize: 0.4,
           expand: false,
           builder: (context, scrollController) {
+            final bool isMe = employee.uid == widget.currentUser.uid;
+            final bool canDelete = isMe || _isAdmin;
+
             return SingleChildScrollView(
               controller: scrollController,
               padding: const EdgeInsets.all(24),
@@ -243,12 +256,80 @@ class _TeamScreenState extends State<TeamScreen> {
                   _buildDetailRow(Icons.calendar_today_outlined, 'Fecha de ingreso', 
                     employee.hireDate != null ? DateFormat('dd/MM/yyyy').format(employee.hireDate!.toDate()) : 'No registrada'),
                   _buildDetailRow(Icons.assignment_ind_outlined, 'Tipo de contrato', employee.contractType ?? 'No registrado'),
+                  
+                  if (canDelete) ...[
+                    const SizedBox(height: 48),
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.red.withOpacity(0.2)),
+                      ),
+                      child: TextButton.icon(
+                        onPressed: () => _confirmDeleteEmployee(employee, isMe),
+                        icon: Icon(isMe ? Icons.exit_to_app : Icons.person_remove_outlined, color: Colors.red),
+                        label: Text(
+                          isMe ? "Darse de baja de la empresa" : "Eliminar empleado de la nómina",
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  void _confirmDeleteEmployee(User employee, bool isMe) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(isMe ? "¿Deseas salir de la empresa?" : "¿Eliminar empleado?"),
+        content: Text(isMe 
+          ? "Perderás el acceso a todas las herramientas de esta empresa. Esta acción no se puede deshacer por ti mismo."
+          : "Esta acción revocará el acceso de ${employee.name} a la empresa de forma inmediata. No se borrarán sus datos personales."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Cerrar Dialog
+              Navigator.pop(context); // Cerrar Sheet
+              
+              try {
+                final companyId = widget.currentUser.companyId;
+                await _firestoreService.removeEmployeeFromCompany(employee.uid, companyId);
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("${employee.name} ha sido eliminado."), backgroundColor: Colors.green),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error al eliminar: $e"), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text("Confirmar Eliminación", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 

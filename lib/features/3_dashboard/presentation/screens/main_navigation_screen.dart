@@ -25,15 +25,64 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return StreamBuilder<model.User?>(
       stream: _firestoreService.getUserStream(),
       builder: (context, snapshot) {
+        debugPrint("--- Navegación: Estado del Stream: ${snapshot.connectionState} ---");
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingScreen();
         }
 
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-          return const Scaffold(body: Center(child: Text("Error al cargar sesión")));
+        if (snapshot.hasError) {
+          debugPrint("--- Navegación: ERROR DETECTADO: ${snapshot.error} ---");
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Error al cargar sesión:\n${snapshot.error}", 
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => setState(() {}), 
+                      child: const Text("Reintentar"),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data == null) {
+          debugPrint("--- Navegación: Perfil no encontrado. Intentando inicializar... ---");
+          
+          return FutureBuilder<model.User?>(
+            future: _firestoreService.getUserData(),
+            builder: (context, initSnapshot) {
+              if (initSnapshot.connectionState == ConnectionState.waiting) {
+                return const LoadingScreen();
+              }
+              
+              if (initSnapshot.hasError || initSnapshot.data == null) {
+                debugPrint("--- Navegación: Error crítico al inicializar perfil: ${initSnapshot.error} ---");
+                _firestoreService.signOut();
+                return const Scaffold(body: Center(child: Text("Error al configurar tu perfil. Por favor, reintenta.")));
+              }
+              
+              // Si todo sale bien, el Stream principal de arriba se refrescará solo
+              return const LoadingScreen();
+            },
+          );
         }
 
         final currentUser = snapshot.data!;
+        debugPrint("--- Navegación: Usuario cargado -> ${currentUser.name} (Rol: ${currentUser.role}) ---");
 
         final List<Widget> pages = [
           DashboardScreen(currentUser: currentUser),

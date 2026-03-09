@@ -94,58 +94,61 @@ class User {
   });
 
   factory User.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+
+    // Helper para manejar listas de forma segura
+    List<String> safeList(dynamic val) {
+      if (val is List) return val.map((e) => e.toString()).toList();
+      return [];
+    }
+
+    // Helper para manejar Timestamps de forma segura
+    Timestamp? safeTimestamp(dynamic val) {
+      if (val is Timestamp) return val;
+      if (val is Map && val['_seconds'] != null) {
+        return Timestamp(val['_seconds'], val['_nanoseconds'] ?? 0);
+      }
+      return null;
+    }
 
     Map<String, dynamic> companiesMap = {};
-    
-    if (data['companies'] != null) {
+    if (data['companies'] != null && data['companies'] is Map) {
       companiesMap = Map<String, dynamic>.from(data['companies']);
-    } else if (data['companyId'] != null && data['companyId'].toString().isNotEmpty) {
-      companiesMap[data['companyId']] = {
-        'role': data['role'] ?? 'user',
-        'name': 'Empresa (Sin nombre)'
+    } else if (data['companyId'] != null) {
+      companiesMap[data['companyId'].toString()] = {
+        'role': data['role']?.toString() ?? 'user',
+        'name': 'Empresa'
       };
     }
 
-    List<String> ownedList = [];
-    if (data['ownedCompanies'] != null) {
-      ownedList = List<String>.from(data['ownedCompanies']);
-    }
-
-    List<String> companyIdsList = [];
-    if (data['companyIds'] != null) {
-      companyIdsList = List<String>.from(data['companyIds']);
-    } else {
-      companyIdsList = companiesMap.keys.toList();
-    }
+    final companyIdsList = data['companyIds'] != null 
+        ? safeList(data['companyIds']) 
+        : companiesMap.keys.toList();
 
     return User(
       uid: doc.id,
-      email: data['email'] ?? '',
-      
+      email: data['email']?.toString() ?? '',
       companies: companiesMap,
       companyIds: companyIdsList,
-      ownedCompanies: ownedList,
-      currentCompanyId: data['currentCompanyId'] ?? (companiesMap.isNotEmpty ? companiesMap.keys.first : ''),
-      
-      status: data['status'] ?? 'pending',
-      createdAt: data['createdAt'] ?? Timestamp.now(),
-
-      name: data['name'] ?? '',
-      phone: data['phone'] ?? '',
-      photoUrl: data['photoUrl'],
-      birthday: data['birthday'],
-      gender: data['gender'],
-      emergencyContact: Map<String, String>.from(data['emergencyContact'] ?? {}),
-
-      department: data['department'],
-      position: data['position'],
-      contractType: data['contractType'],
-      hireDate: data['hireDate'],
-
-      rfc: data['rfc'],
-      curp: data['curp'],
-      nss: data['nss'],
+      ownedCompanies: safeList(data['ownedCompanies']),
+      currentCompanyId: data['currentCompanyId']?.toString() ?? (companiesMap.isNotEmpty ? companiesMap.keys.first : ''),
+      status: data['status']?.toString() ?? 'pending',
+      createdAt: safeTimestamp(data['createdAt']) ?? Timestamp.now(),
+      name: data['name']?.toString() ?? 'Sin Nombre',
+      phone: data['phone']?.toString(),
+      photoUrl: data['photoUrl']?.toString(),
+      birthday: safeTimestamp(data['birthday']),
+      gender: data['gender']?.toString(),
+      emergencyContact: data['emergencyContact'] is Map 
+          ? Map<String, String>.from((data['emergencyContact'] as Map).map((k, v) => MapEntry(k.toString(), v.toString())))
+          : {},
+      department: data['department']?.toString(),
+      position: data['position']?.toString(),
+      contractType: data['contractType']?.toString(),
+      hireDate: safeTimestamp(data['hireDate']),
+      rfc: data['rfc']?.toString(),
+      curp: data['curp']?.toString(),
+      nss: data['nss']?.toString(),
     );
   }
 

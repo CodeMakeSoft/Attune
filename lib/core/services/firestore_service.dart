@@ -331,6 +331,13 @@ class FirestoreService {
     });
   }
 
+  Future<void> updateCompanySchedule(String companyId, String startTime, String endTime) async {
+    await _db.collection('companies').doc(companyId).update({
+      'workStartTime': startTime,
+      'workEndTime': endTime,
+    });
+  }
+
   // Actualizar perfil laboral de un empleado (solo admins)
   Future<void> updateEmployeeWorkProfile(String userId, String companyId, {
     String? department,

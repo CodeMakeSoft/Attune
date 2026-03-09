@@ -8,10 +8,12 @@ class Company {
   final Timestamp createdAt;
   final String ownerUid; // El UID del Super Admin que la creó
   
-  // Listas de configuración
+  // Configuraciones
   final List<String> departments;
-  final List<String> jobTitles; // Roles de empresa (Puestos)
-  final List<Map<String, dynamic>> benefits; // Prestaciones
+  final List<String> jobTitles;
+  final List<Map<String, dynamic>> benefits;
+  final String workStartTime; // HH:mm
+  final String workEndTime;   // HH:mm
 
   const Company({
     required this.companyId,
@@ -23,6 +25,8 @@ class Company {
     this.departments = const [],
     this.jobTitles = const [],
     this.benefits = const [],
+    this.workStartTime = '09:00',
+    this.workEndTime = '18:00',
   });
 
   factory Company.fromFirestore(DocumentSnapshot doc) {
@@ -37,10 +41,11 @@ class Company {
       departments: List<String>.from(data['departments'] ?? []),
       jobTitles: List<String>.from(data['jobTitles'] ?? []),
       benefits: List<Map<String, dynamic>>.from(data['benefits'] ?? []),
+      workStartTime: data['workStartTime'] ?? '09:00',
+      workEndTime: data['workEndTime'] ?? '18:00',
     );
   }
 
-  // Método para crear el mapa para Firestore
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -51,6 +56,8 @@ class Company {
       'departments': departments,
       'jobTitles': jobTitles,
       'benefits': benefits,
+      'workStartTime': workStartTime,
+      'workEndTime': workEndTime,
     };
   }
 }

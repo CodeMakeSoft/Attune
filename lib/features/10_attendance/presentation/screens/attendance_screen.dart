@@ -1,4 +1,5 @@
 import 'package:attune/core/models/user_model.dart' as model;
+import 'package:attune/core/models/company_model.dart';
 import 'package:flutter/material.dart';
 import 'package:attune/utils/app_colors.dart';
 import 'package:intl/intl.dart';
@@ -23,40 +24,68 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final userId = widget.currentUser.uid;
     final companyId = widget.currentUser.companyId;
 
-    return StreamBuilder<DocumentSnapshot?>(
-      stream: _firestoreService.getTodayAttendanceStream(userId),
-      builder: (context, snapshot) {
-        final attendanceData = snapshot.data?.data() as Map<String, dynamic>?;
-        final bool hasCheckIn = attendanceData?['checkIn'] != null;
-        final bool hasCheckOut = attendanceData?['checkOut'] != null;
+    return StreamBuilder<DocumentSnapshot>(
+      stream: _firestoreService.getCompanyStream(companyId),
+      builder: (context, companySnapshot) {
+        if (!companySnapshot.hasData) return const Center(child: CircularProgressIndicator());
         
-        // Estado actual: 0 = No ha entrado, 1 = Trabajando, 2 = Completado
-        int status = 0;
-        if (hasCheckIn && !hasCheckOut) status = 1;
-        if (hasCheckIn && hasCheckOut) status = 2;
+        final company = Company.fromFirestore(companySnapshot.data!);
+        
+        return StreamBuilder<DocumentSnapshot?>(
+          stream: _firestoreService.getTodayAttendanceStream(userId),
+          builder: (context, snapshot) {
+            final attendanceData = snapshot.data?.data() as Map<String, dynamic>?;
+            final bool hasCheckIn = attendanceData?['checkIn'] != null;
+            final bool hasCheckOut = attendanceData?['checkOut'] != null;
+            
+            // Estado actual: 0 = No ha entrado, 1 = Trabajando, 2 = Completado
+            int status = 0;
+            if (hasCheckIn && !hasCheckOut) status = 1;
+            if (hasCheckIn && hasCheckOut) status = 2;
 
-        return Column(
-          children: [
-            _buildHeader(status, attendanceData),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 30),
-                    _buildPunchButton(status, userId, companyId),
-                    const SizedBox(height: 40),
-                    _buildInfoCards(attendanceData),
-                    const SizedBox(height: 30),
-                    _buildHistorySection(userId),
-                  ],
+            return Column(
+              children: [
+                _buildHeader(status, attendanceData),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 30),
+                        _buildPunchButton(status, userId, companyId),
+                        const SizedBox(height: 40),
+                        _buildInfoCards(attendanceData),
+                        const SizedBox(height: 30),
+                        _buildHistorySection(userId, company.workStartTime),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
-      },
+      }
     );
+  }
+
+  // Helper para validar puntualidad
+  bool _isPunctual(Timestamp checkIn, String startTimeStr) {
+    try {
+      final parts = startTimeStr.split(':');
+      final startHour = int.parse(parts[0]);
+      final startMin = int.parse(parts[1]);
+      
+      final checkInDate = checkIn.toDate();
+      
+      // Margen de 10 minutos
+      final limitMinutes = (startHour * 60) + startMin + 10;
+      final actualMinutes = (checkInDate.hour * 60) + checkInDate.minute;
+      
+      return actualMinutes <= limitMinutes;
+    } catch (e) {
+      return true; // Fallback a puntual si hay error en formato
+    }
   }
 
   Widget _buildHeader(int status, Map<String, dynamic>? data) {
@@ -225,7 +254,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _buildHistorySection(String userId) {
+  Widget _buildHistorySection(String userId, String workStartTime) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -244,7 +273,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               if (logs.isEmpty) return const Center(child: Text("Sin registros previos"));
 
               return Column(
-                children: logs.map((log) => _buildHistoryItem(log)).toList(),
+                children: logs.map((log) => _buildHistoryItem(log, workStartTime)).toList(),
               );
             },
           ),
@@ -253,10 +282,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _buildHistoryItem(Map<String, dynamic> log) {
+  Widget _buildHistoryItem(Map<String, dynamic> log, String workStartTime) {
     final checkIn = log['checkIn'] as Timestamp?;
     final checkOut = log['checkOut'] as Timestamp?;
     final dateStr = log['date'] as String? ?? '';
+    
+    final bool puntual = checkIn != null ? _isPunctual(checkIn, workStartTime) : true;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -288,11 +319,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     if (checkIn != null) ...[
                       const SizedBox(width: 8),
                       Text(
-                         (checkIn.toDate().hour < 9 || (checkIn.toDate().hour == 9 && checkIn.toDate().minute <= 10)) 
-                         ? "• Puntual" : "• Retraso",
+                         puntual ? "• Puntual" : "• Retraso",
                          style: TextStyle(
-                           color: (checkIn.toDate().hour < 9 || (checkIn.toDate().hour == 9 && checkIn.toDate().minute <= 10)) 
-                           ? Colors.blue : Colors.red, 
+                           color: puntual ? Colors.blue : Colors.red, 
                            fontSize: 11, 
                            fontWeight: FontWeight.bold
                          ),

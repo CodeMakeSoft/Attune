@@ -1,5 +1,4 @@
 import 'package:attune/features/3_dashboard/presentation/widgets/dashboard_grid_button.dart';
-import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 import 'package:attune/features/5_employees/presentation/screens/employee_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -8,6 +7,7 @@ import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/evaluation_form_screen.dart';
 import 'package:attune/features/6_permissions/presentation/screens/leave_request_screen.dart';
 import 'package:attune/features/7_events/presentation/screens/events_screen.dart';
+import 'package:attune/features/14_benefits/presentation/screens/benefits_screen.dart';
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 import 'package:attune/features/13_support/presentation/screens/support_screen.dart';
@@ -90,6 +90,13 @@ class AdminDashboardView extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (context) => EventsScreen(currentUser: currentUser)),
             );
+          },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.umbrellaBeach,
+          label: 'Prestaciones',
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => BenefitsScreen(currentUser: currentUser)));
           },
         ),
         DashboardGridButton(

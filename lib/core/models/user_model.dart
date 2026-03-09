@@ -7,7 +7,7 @@ class User {
   
   // Multi-Company Architecture
   // Clave: companyId
-  // Valor: { 'role': 'admin', 'name': 'Tech Solutions' }
+  // Valor: { 'role': 'admin', 'name': 'Tech Solutions', 'assignedBenefits': [...] }
   final Map<String, dynamic> companies; 
   
   final List<String> ownedCompanies;
@@ -47,14 +47,12 @@ class User {
     final companyData = companies[currentCompanyId];
     if (companyData == null) return 'user';
     
-    // Soporte híbrido: Si es String (viejo) o Map (nuevo)
     if (companyData is String) return companyData;
     if (companyData is Map) return companyData['role'] ?? 'user';
     
     return 'user';
   }
   
-  // Nuevo getter para obtener el nombre de la empresa actual
   String get currentCompanyName {
     if (currentCompanyId.isEmpty) return '';
     final companyData = companies[currentCompanyId];
@@ -62,11 +60,20 @@ class User {
     return '';
   }
 
+  List<String> get assignedBenefits {
+    if (currentCompanyId.isEmpty) return [];
+    final companyData = companies[currentCompanyId];
+    if (companyData is Map) {
+      return List<String>.from(companyData['assignedBenefits'] ?? []);
+    }
+    return [];
+  }
+
   const User({
     required this.uid,
     required this.email,
     required this.companies,
-    required this.companyIds, // Changed
+    required this.companyIds,
     required this.ownedCompanies,
     required this.currentCompanyId,
     required this.status,
@@ -89,16 +96,14 @@ class User {
   factory User.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    // Manejo robusto del mapa de compañías
     Map<String, dynamic> companiesMap = {};
     
     if (data['companies'] != null) {
       companiesMap = Map<String, dynamic>.from(data['companies']);
     } else if (data['companyId'] != null && data['companyId'].toString().isNotEmpty) {
-      // Migración legacy
       companiesMap[data['companyId']] = {
         'role': data['role'] ?? 'user',
-        'name': 'Empresa (Sin nombre)' // Placeholder para datos viejos
+        'name': 'Empresa (Sin nombre)'
       };
     }
 
@@ -107,12 +112,10 @@ class User {
       ownedList = List<String>.from(data['ownedCompanies']);
     }
 
-    // Helper list companyIds
     List<String> companyIdsList = [];
     if (data['companyIds'] != null) {
       companyIdsList = List<String>.from(data['companyIds']);
     } else {
-      // Fallback: generate from companies map keys if missing
       companyIdsList = companiesMap.keys.toList();
     }
 

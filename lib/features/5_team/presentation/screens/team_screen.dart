@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/utils/app_colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class TeamScreen extends StatefulWidget {
@@ -271,53 +272,126 @@ class _TeamScreenState extends State<TeamScreen> {
   }
 
   void _showEditEmployeeDialog(User employee) {
-    // Solo admins pueden editar. Implementaremos un diálogo rápido para actualizar puesto y depto.
     final TextEditingController positionController = TextEditingController(text: employee.position);
     final TextEditingController departmentController = TextEditingController(text: employee.department);
+    List<String> assignedBenefits = List<String>.from(employee.assignedBenefits);
     
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Editar: ${employee.name.split(' ')[0]}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: positionController,
-                decoration: const InputDecoration(labelText: 'Puesto / Cargo'),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text('Editar: ${employee.name.split(' ')[0]}'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: positionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Puesto / Cargo',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: departmentController,
+                      decoration: const InputDecoration(
+                        labelText: 'Departamento',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Prestaciones Asignadas',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    // Cargar beneficios de la empresa
+                    FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('companies').doc(widget.currentUser.companyId).get(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const LinearProgressIndicator();
+                        
+                        final companyData = snapshot.data!.data() as Map<String, dynamic>?;
+                        final companyBenefits = List<Map<String, dynamic>>.from(companyData?['benefits'] ?? []);
+                        
+                        if (companyBenefits.isEmpty) {
+                          return const Text('No hay prestaciones creadas en la empresa.', style: TextStyle(fontSize: 12, color: Colors.grey));
+                        }
+
+                        return Column(
+                          children: companyBenefits.map((benefit) {
+                            final title = benefit['title'] as String;
+                            final isSelected = assignedBenefits.contains(title);
+                            
+                            return CheckboxListTile(
+                              title: Text(title, style: const TextStyle(fontSize: 14)),
+                              value: isSelected,
+                              dense: true,
+                              activeColor: AppColors.accentPrimary,
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  if (val == true) {
+                                    assignedBenefits.add(title);
+                                  } else {
+                                    assignedBenefits.remove(title);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: departmentController,
-                decoration: const InputDecoration(labelText: 'Departamento'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final Map<String, dynamic> updateData = {
-                  'position': positionController.text,
-                  'department': departmentController.text,
-                };
-                
-                await _firestoreService.updateUserFields(employee.uid, updateData);
-                
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Empleado actualizado correctamente')),
-                  );
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final Map<String, dynamic> updateData = {
+                        'position': positionController.text.trim(),
+                        'department': departmentController.text.trim(),
+                      };
+                      
+                      // Actualizar datos básicos
+                      await _firestoreService.updateUserFields(employee.uid, updateData);
+                      
+                      // Actualizar prestaciones
+                      await _firestoreService.updateEmployeeBenefits(
+                        employee.uid, 
+                        widget.currentUser.companyId, 
+                        assignedBenefits
+                      );
+                      
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('✅ Empleado actualizado correctamente')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Guardar Cambios'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

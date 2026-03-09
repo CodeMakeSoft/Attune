@@ -11,6 +11,7 @@ class Company {
   // Listas de configuración
   final List<String> departments;
   final List<String> jobTitles; // Roles de empresa (Puestos)
+  final List<Map<String, dynamic>> benefits; // Prestaciones
 
   const Company({
     required this.companyId,
@@ -21,6 +22,7 @@ class Company {
     required this.ownerUid,
     this.departments = const [],
     this.jobTitles = const [],
+    this.benefits = const [],
   });
 
   factory Company.fromFirestore(DocumentSnapshot doc) {
@@ -34,6 +36,7 @@ class Company {
       ownerUid: data['ownerUid'] ?? '',
       departments: List<String>.from(data['departments'] ?? []),
       jobTitles: List<String>.from(data['jobTitles'] ?? []),
+      benefits: List<Map<String, dynamic>>.from(data['benefits'] ?? []),
     );
   }
 
@@ -47,6 +50,7 @@ class Company {
       'ownerUid': ownerUid,
       'departments': departments,
       'jobTitles': jobTitles,
+      'benefits': benefits,
     };
   }
 }

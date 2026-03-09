@@ -1,5 +1,4 @@
 import 'package:attune/features/3_dashboard/presentation/widgets/dashboard_grid_button.dart';
-import 'package:attune/features/4_profile/presentation/screens/profile_screen.dart';
 import 'package:attune/features/5_employees/presentation/screens/employee_list_screen.dart';
 import 'package:attune/features/8_organization/presentation/screens/organization_screen.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +12,7 @@ import 'package:attune/features/7_events/presentation/screens/events_screen.dart
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 import 'package:attune/features/12_memberships/presentation/screens/memberships_screen.dart';
 import 'package:attune/features/13_support/presentation/screens/support_screen.dart';
+import 'package:attune/features/14_benefits/presentation/screens/benefits_screen.dart';
 
 class SuperAdminDashboardView extends StatelessWidget {
   final User currentUser;
@@ -109,6 +109,13 @@ class SuperAdminDashboardView extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (context) => EventsScreen(currentUser: currentUser)),
             );
+          },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.umbrellaBeach,
+          label: 'Prestaciones',
+          onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (c) => BenefitsScreen(currentUser: currentUser)));
           },
         ),
         DashboardGridButton(

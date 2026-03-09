@@ -325,21 +325,85 @@ class FirestoreService {
     });
   }
 
+  Future<void> updateBenefits(String companyId, List<Map<String, dynamic>> benefits) async {
+    await _db.collection('companies').doc(companyId).update({
+      'benefits': benefits,
+    });
+  }
+
   // Actualizar perfil laboral de un empleado (solo admins)
   Future<void> updateEmployeeWorkProfile(String userId, String companyId, {
     String? department,
     String? position,
-    String? role, // Admin / User role
+    String? role,
   }) async {
-    Map<String, dynamic> updates = {};
-    if (department != null) updates['department'] = department;
-    if (position != null) updates['position'] = position;
-    
-    // Si cambia el rol de sistema (Admin/User), actualizamos el mapa
-    if (role != null) {
-       updates['companies.$companyId.role'] = role;
-    }
+    try {
+      final userDocRef = _db.collection('users').doc(userId);
+      final docSn = await userDocRef.get();
+      
+      if (!docSn.exists) return;
+      
+      final data = docSn.data() as Map<String, dynamic>;
+      final companies = Map<String, dynamic>.from(data['companies'] ?? {});
+      
+      // Actualizar datos top-level (compatibilidad)
+      Map<String, dynamic> topLevelUpdates = {};
+      if (department != null) topLevelUpdates['department'] = department;
+      if (position != null) topLevelUpdates['position'] = position;
+      
+      // Asegurar estructura de mapa para la empresa específica
+      if (companies[companyId] is! Map) {
+         final existingRole = companies[companyId] is String ? companies[companyId] : 'user';
+         companies[companyId] = {
+           'role': role ?? existingRole,
+           'name': data['currentCompanyName'] ?? 'Empresa', // Fallback
+         };
+      } else {
+         if (role != null) companies[companyId]['role'] = role;
+      }
 
+      // Preparar el objeto final de actualización
+      Map<String, dynamic> finalUpdates = {
+        'companies': companies,
+      };
+      finalUpdates.addAll(topLevelUpdates);
+
+      await userDocRef.update(finalUpdates);
+    } catch (e) {
+      log('Error al actualizar perfil laboral: $e', name: 'FirestoreService');
+      rethrow;
+    }
+  }
+
+  Future<void> updateEmployeeBenefits(String userId, String companyId, List<String> benefits) async {
+    try {
+      final userDocRef = _db.collection('users').doc(userId);
+      final docSn = await userDocRef.get();
+      
+      if (!docSn.exists) return;
+      
+      final data = docSn.data() as Map<String, dynamic>;
+      final companies = Map<String, dynamic>.from(data['companies'] ?? {});
+      
+      // Si el dato de la empresa es un string (legacy) o no existe, lo inicializamos como mapa
+      if (companies[companyId] is! Map) {
+        final existingRole = companies[companyId] is String ? companies[companyId] : 'user';
+        companies[companyId] = {
+          'role': existingRole,
+          'assignedBenefits': benefits,
+        };
+      } else {
+        // Si ya es un mapa, solo actualizamos la lista
+        companies[companyId]['assignedBenefits'] = benefits;
+      }
+      
+      await userDocRef.update({
+        'companies': companies
+      });
+    } catch (e) {
+      log('Error al actualizar prestaciones del empleado: $e', name: 'FirestoreService');
+      rethrow;
+    }
   }
 
   // --- PERFORMANCE EVALUATIONS ---

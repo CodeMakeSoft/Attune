@@ -4,6 +4,7 @@ import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/features/4_profile/presentation/widgets/profile_form.dart';
 import 'package:attune/core/services/auth_service.dart';
+import 'package:attune/utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
   final User currentUser;
@@ -17,7 +18,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final AuthService _authService = AuthService();
   User? _user;
-  bool _isLoading = true;
   bool _isSaving = false;
   List<String> _departments = [];
   List<String> _positions = [];
@@ -30,8 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadCompanyData() async {
-    setState(() => _isLoading = true);
-    
     List<String> depts = [];
     List<String> pos = [];
 
@@ -52,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _departments = depts;
         _positions = pos;
-        _isLoading = false;
       });
     }
   }
@@ -84,124 +81,202 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-    
-    if (_user == null) {
-      return const Scaffold(
-        body: Center(child: Text("Error al cargar usuario")),
-      );
-    }
+    return StreamBuilder<User?>(
+      stream: _firestoreService.getUserStream(),
+      builder: (context, snapshot) {
+        final user = snapshot.data ?? widget.currentUser;
+        
+        final isActiveSuperAdmin = user.role == 'super_admin';
 
-    final isActiveSuperAdmin = _user!.role == 'super_admin';
+        final permissions = ProfilePermissions(
+          canEditPersonal: true,
+          canEditJob: isActiveSuperAdmin, 
+          canEditLegal: true,
+        );
 
-    final permissions = ProfilePermissions(
-      canEditPersonal: true,
-      canEditJob: isActiveSuperAdmin, 
-      canEditLegal: true,
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mi Perfil"),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            tooltip: 'Cerrar Sesión',
-            onPressed: () async {
-              await _authService.signOut();
-              
-              if (context.mounted) {
-                // Esto borra todo el historial de pantallas y te manda a la ruta principal
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const AuthGate()),
-                  (Route<dynamic> route) => false,
-                );
-              }
-            },
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Mi Perfil"),
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                tooltip: 'Cerrar Sesión',
+                onPressed: () async {
+                  await _authService.signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const AuthGate()),
+                      (Route<dynamic> route) => false,
+                    );
+                  }
+                },
+              ),
+            ]
           ),
-        ]
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4), // Grosor del anillo
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Colors.blueAccent, Colors.purpleAccent, Colors.cyan],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                _buildProfileHeader(user),
+                const SizedBox(height: 32),
+                
+                // Nueva sección de Beneficios
+                _buildBenefitsSection(user),
+                const SizedBox(height: 32),
+                
+                ProfileForm(
+                  user: user,
+                  permissions: permissions,
+                  onSave: _handleSave,
+                  isLoading: _isSaving,
+                  availableDepartments: _departments,
+                  availablePositions: _positions,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blueAccent.withOpacity(0.4),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+              ],
+            ),
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildProfileHeader(User user) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent, Colors.cyan],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blueAccent.withOpacity(0.4),
+                blurRadius: 15,
+                spreadRadius: 2,
+                offset: const Offset(0, 5),
               ),
-              child: Container(
-                padding: const EdgeInsets.all(3), // Borde interior de separación
-                decoration: const BoxDecoration(
-                  color: Colors.white, // Color del fondo de separación (o Colors.black si es dark mode)
-                  shape: BoxShape.circle,
-                ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                  backgroundImage: _user!.photoUrl != null ? NetworkImage(_user!.photoUrl!) : null,
-                  child: _user!.photoUrl == null
-                      ? Text(
-                          _user!.name.isNotEmpty ? _user!.name[0].toUpperCase() : '?',
-                          style: TextStyle(
-                            fontSize: 40, 
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )
-                      : null,
-                ),
-              ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 16),
-            Text(
-              _user!.name,
-              style: Theme.of(context).textTheme.headlineSmall,
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+              child: user.photoUrl == null
+                  ? Text(
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontSize: 40, 
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
-            Text(
-              _user!.email,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            // Mostrar Rol en la Empresa (Puesto) en lugar del Rol de Sistema
-            if (_user!.position != null && _user!.position!.isNotEmpty)
-              Text(
-                _user!.position!,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            const SizedBox(height: 32),
-            
-            ProfileForm(
-              user: _user,
-              permissions: permissions,
-              onSave: _handleSave,
-              isLoading: _isSaving,
-              availableDepartments: _departments,
-              availablePositions: _positions,
-            ),
-          ],
+          ),
         ),
+        const SizedBox(height: 16),
+        Text(
+          user.name,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        Text(
+          user.email,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+        ),
+        if (user.position != null && user.position!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              user.position!,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBenefitsSection(User user) {
+    final benefits = user.assignedBenefits;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Mis Prestaciones',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accentPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${benefits.length}',
+                  style: TextStyle(color: AppColors.accentPrimary, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (benefits.isEmpty)
+            const Text(
+              'No tienes prestaciones asignadas actualmente.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: benefits.map((benefit) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle, size: 14, color: Colors.green),
+                    const SizedBox(width: 6),
+                    Text(benefit, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              )).toList(),
+            ),
+        ],
       ),
     );
   }

@@ -396,20 +396,9 @@ class FirestoreService {
     }
   }
 
-  // 2. Obtener solicitudes (Si isAdmin = true, trae todas las de la empresa. Si no, solo las del usuario)
-  Stream<QuerySnapshot> getLeaveRequests({
-    required String companyId, 
-    required bool isAdmin, 
-    required String currentUserId
-  }) {
-    // Referencia base a la colección
-    Query query = _db.collection('leave_requests').where('companyId', isEqualTo: companyId);
-
-    if (!isAdmin) {
-      query = query.where('userId', isEqualTo: currentUserId);
-    }
-
-    return query.orderBy('createdAt', descending: true).snapshots();
+  // 2. Obtener solicitudes (Solo filtramos por empresa para evitar pedir Composite Indexes en Firebase)
+  Stream<QuerySnapshot> getLeaveRequests(String companyId) {
+    return _db.collection('leave_requests').where('companyId', isEqualTo: companyId).snapshots();
   }
 
   Future<bool> updateLeaveRequestStatus(String requestId, String newStatus) async {
@@ -457,6 +446,87 @@ class FirestoreService {
     } catch (e) {
       log('Error al actualizar evento: $e', name: 'FirestoreService');
       return false;
+    }
+  }
+
+  // --- NOTIFICACIONES ---
+
+  Future<bool> createNotification(Map<String, dynamic> notifData) async {
+    try {
+      await _db.collection('notifications').add(notifData);
+      return true;
+    } catch (e) {
+      log('Error al crear notificación: $e', name: 'FirestoreService');
+      return false;
+    }
+  }
+
+  Stream<QuerySnapshot> getUserNotifications(String userId) {
+    return _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .snapshots();
+  }
+
+  Future<void> markNotificationAsRead(String notifId) async {
+    try {
+      await _db.collection('notifications').doc(notifId).update({'isRead': true});
+    } catch (e) {
+      log('Error al actualizar notificación: $e', name: 'FirestoreService');
+    }
+  }
+
+  // Notificar a todos los empleados de una empresa (Ej: Nuevo Evento)
+  Future<void> notifyCompanyUsers(String companyId, Map<String, dynamic> notificationBase) async {
+    try {
+      final usersSnap = await _db.collection('users').where('companyIds', arrayContains: companyId).get();
+      final batch = _db.batch();
+
+      for (var doc in usersSnap.docs) {
+        // No notificamos al mismo creador si es necesario, pero para eventos está bien que le salga.
+        final notifRef = _db.collection('notifications').doc();
+        final notifData = Map<String, dynamic>.from(notificationBase);
+        notifData['userId'] = doc.id; // Asignamos la alerta a cada empleado
+        batch.set(notifRef, notifData);
+      }
+
+      await batch.commit();
+      log('Notificaciones de evento enviadas a ${usersSnap.docs.length} usuarios.', name: 'FirestoreService');
+    } catch (e) {
+      log('Error al enviar notificaciones masivas: $e', name: 'FirestoreService');
+    }
+  }
+
+  // Notificar a los admins cuando alguien pide un permiso
+  Future<void> notifyAdmins(String companyId, Map<String, dynamic> notificationBase) async {
+    try {
+      final usersSnap = await _db.collection('users').where('companyIds', arrayContains: companyId).get();
+      final batch = _db.batch();
+      
+      int adminsNotified = 0;
+      for (var doc in usersSnap.docs) {
+        final data = doc.data();
+        final companies = data['companies'] as Map<String, dynamic>? ?? {};
+        final userCompanyData = companies[companyId] as Map<String, dynamic>?;
+        
+        if (userCompanyData != null) {
+          final role = userCompanyData['role'];
+          if (role == 'admin' || role == 'super_admin') {
+            final notifRef = _db.collection('notifications').doc();
+            final notifData = Map<String, dynamic>.from(notificationBase);
+            notifData['userId'] = doc.id;
+            batch.set(notifRef, notifData);
+            adminsNotified++;
+          }
+        }
+      }
+
+      if (adminsNotified > 0) {
+        await batch.commit();
+        log('Notificación enviada a $adminsNotified admins.', name: 'FirestoreService');
+      }
+    } catch (e) {
+      log('Error al notificar admins: $e', name: 'FirestoreService');
     }
   }
 }

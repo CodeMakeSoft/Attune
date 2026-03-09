@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/models/leave_request_model.dart';
+import 'package:attune/core/models/notification_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/utils/app_colors.dart';
 import 'package:intl/intl.dart';
@@ -32,11 +33,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
         onPressed: () => _showCreateRequestDialog(context),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestoreService.getLeaveRequests(
-          companyId: widget.currentUser.companyId,
-          isAdmin: _isAdmin,
-          currentUserId: widget.currentUser.uid,
-        ),
+        stream: _firestoreService.getLeaveRequests(widget.currentUser.companyId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -46,25 +43,33 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
             return const Center(child: Text("Ocurrió un error al cargar los datos."));
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData) {
             return const Center(
-              child: Text("No hay solicitudes de permisos por mostrar."),
+              child: Text("No hay datos disponibles."),
             );
           }
 
           final rawDocs = snapshot.data!.docs;
           
+          List<LeaveRequest> requests = rawDocs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return LeaveRequest.fromMap(data, doc.id);
+          }).where((req) => _isAdmin || req.userId == widget.currentUser.uid).toList();
+
+          // Ordenar del más reciente al más antiguo
+          requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          if (requests.isEmpty) {
+            return const Center(
+              child: Text("No hay solicitudes de permisos por mostrar."),
+            );
+          }
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: rawDocs.length,
+            itemCount: requests.length,
             itemBuilder: (context, index) {
-              final doc = rawDocs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              
-              // Convertimos la caja de datos a nuestro modelo estructurado
-              final request = LeaveRequest.fromMap(data, doc.id);
-
-              return _buildRequestCard(request);
+              return _buildRequestCard(requests[index]);
             },
           );
         },
@@ -140,14 +145,20 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                   TextButton.icon(
                     icon: const Icon(Icons.close, color: Colors.red),
                     label: const Text('Rechazar', style: TextStyle(color: Colors.red)),
-                    onPressed: () => _firestoreService.updateLeaveRequestStatus(req.id, 'rejected'),
+                    onPressed: () {
+                      _firestoreService.updateLeaveRequestStatus(req.id, 'rejected');
+                      _notifyStatusChange(req, 'Rechazado', 'rechazada');
+                    },
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.check),
                     label: const Text('Aprobar'),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                    onPressed: () => _firestoreService.updateLeaveRequestStatus(req.id, 'approved'),
+                    onPressed: () {
+                      _firestoreService.updateLeaveRequestStatus(req.id, 'approved');
+                      _notifyStatusChange(req, 'Aprobado', 'aprobada');
+                    },
                   ),
                 ],
               )
@@ -247,6 +258,15 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                       // 2. Lo enviamos usando toMap()
                        await _firestoreService.createLeaveRequest(newRequest.toMap());
 
+                       // Notificar a los administradores
+                       _firestoreService.notifyAdmins(widget.currentUser.companyId, {
+                         'title': 'Nueva Solicitud de Permiso',
+                         'body': '${widget.currentUser.name} ha solicitado "${newRequest.type}".',
+                         'type': 'leave_request',
+                         'isRead': false,
+                         'createdAt': Timestamp.now(),
+                       });
+
                        if (context.mounted) {
                           Navigator.pop(dialogContext);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -263,5 +283,21 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
         );
       },
     );
+  }
+
+  // --- NOTIFICAR CAMBIO DE ESTADO ---
+  void _notifyStatusChange(LeaveRequest req, String statusTitle, String bodyStatus) {
+    if (req.userId.isEmpty) return;
+
+    final notification = AppNotification(
+      id: '',
+      userId: req.userId,
+      title: 'Permiso $statusTitle',
+      body: 'Tu solicitud de "${req.type}" ha sido $bodyStatus por un administrador.',
+      type: 'leave_request',
+      createdAt: DateTime.now(),
+    );
+
+    _firestoreService.createNotification(notification.toMap());
   }
 }

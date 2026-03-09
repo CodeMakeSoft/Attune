@@ -272,6 +272,15 @@ class _EventsScreenState extends State<EventsScreen> {
                       
                        await _firestoreService.createEvent(newEvent.toMap());
 
+                       // Notificar a todos los empleados de la empresa
+                       _firestoreService.notifyCompanyUsers(widget.currentUser.companyId, {
+                         'title': 'Nuevo Evento: ${newEvent.title}',
+                         'body': 'Se ha publicado un nuevo comunicado en el muro.',
+                         'type': 'event',
+                         'isRead': false,
+                         'createdAt': Timestamp.now(),
+                       });
+
                        if (context.mounted) {
                           Navigator.pop(dialogContext);
                           ScaffoldMessenger.of(context).showSnackBar(

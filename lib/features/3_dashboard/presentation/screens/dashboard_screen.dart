@@ -6,6 +6,8 @@ import 'package:attune/features/2_auth/presentation/screens/create_company_scree
 import 'package:attune/features/3_dashboard/presentation/views/admin_dashboard_view.dart';
 import 'package:attune/features/3_dashboard/presentation/views/super_admin_dashboard_view.dart';
 import 'package:attune/features/3_dashboard/presentation/views/user_dashboard_view.dart';
+import 'package:attune/features/11_notifications/presentation/screens/notifications_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -161,6 +163,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
+              // Aquí la campana de notificaciones
+              _buildNotificationBell(context, appUser),
             ],
           ),
           
@@ -248,6 +252,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         }).toList(),
       ),
+    );
+  }
+
+  Widget _buildNotificationBell(BuildContext context, User appUser) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestoreService.getUserNotifications(appUser.uid),
+      builder: (context, snapshot) {
+        int unreadCount = 0;
+        if (snapshot.hasData) {
+          unreadCount = snapshot.data!.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['isRead'] == false;
+          }).length;
+        }
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotificationsScreen(currentUser: appUser)),
+                );
+              },
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    unreadCount > 9 ? '9+' : unreadCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

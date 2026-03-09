@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/features/9_performance/presentation/screens/user_performance_screen.dart';
-import 'package:attune/features/10_attendance/presentation/screens/user_attendance_screen.dart';
+import 'package:attune/features/10_attendance/presentation/screens/attendance_screen.dart';
 import 'package:attune/features/6_permissions/presentation/screens/leave_request_screen.dart';
 import 'package:attune/features/7_events/presentation/screens/events_screen.dart';
 import 'package:attune/features/14_benefits/presentation/screens/benefits_screen.dart';
@@ -38,9 +38,8 @@ class UserDashboardView extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => UserAttendanceScreen(
-                  userId: currentUser.uid,
-                  companyId: currentUser.companyId,
+                builder: (context) => AttendanceScreen(
+                  currentUser: currentUser,
                 ),
               ),
             );

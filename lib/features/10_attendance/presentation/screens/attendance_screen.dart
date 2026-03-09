@@ -4,7 +4,7 @@ import 'package:attune/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:attune/core/services/firestore_service.dart';
-import 'package:attune/core/widgets/loading_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AttendanceScreen extends StatefulWidget {
   final model.User currentUser;
@@ -18,266 +18,330 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   bool _isLoading = false;
 
-  // Stream var to prevent rebuilding
-  late Stream<List<Map<String, dynamic>>> _attendanceStream;
-
   @override
-  void initState() {
-    super.initState();
-    _attendanceStream = _firestoreService.getUserAttendance(widget.currentUser.uid);
-  }
-
-  Future<void> _handleCheckInOut() async {
+  Widget build(BuildContext context) {
     final userId = widget.currentUser.uid;
     final companyId = widget.currentUser.companyId;
 
-     if (companyId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tienes una empresa asignada.')),
-      );
-      return;
+    return StreamBuilder<DocumentSnapshot?>(
+      stream: _firestoreService.getTodayAttendanceStream(userId),
+      builder: (context, snapshot) {
+        final attendanceData = snapshot.data?.data() as Map<String, dynamic>?;
+        final bool hasCheckIn = attendanceData?['checkIn'] != null;
+        final bool hasCheckOut = attendanceData?['checkOut'] != null;
+        
+        // Estado actual: 0 = No ha entrado, 1 = Trabajando, 2 = Completado
+        int status = 0;
+        if (hasCheckIn && !hasCheckOut) status = 1;
+        if (hasCheckIn && hasCheckOut) status = 2;
+
+        return Column(
+          children: [
+            _buildHeader(status, attendanceData),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 30),
+                    _buildPunchButton(status, userId, companyId),
+                    const SizedBox(height: 40),
+                    _buildInfoCards(attendanceData),
+                    const SizedBox(height: 30),
+                    _buildHistorySection(userId),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader(int status, Map<String, dynamic>? data) {
+    Color statusColor = Colors.grey;
+    String statusText = "Sin Registro";
+    
+    if (status == 1) {
+      statusColor = Colors.greenAccent;
+      statusText = "Turno Activo";
+    } else if (status == 2) {
+      statusColor = Colors.orangeAccent;
+      statusText = "Jornada Finalizada";
     }
 
-    await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Registro de Asistencia"),
-          content: const Text("¿Qué deseas registrar?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performCheckIn(userId, companyId);
-              },
-              child: const Text("ENTRADA"),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                statusText.toUpperCase(),
+                style: TextStyle(
+                  color: statusColor.withOpacity(0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const DigitalClockWidget(),
+          if (status == 1) ...[
+             const SizedBox(height: 12),
+             _buildTimer(data?['checkIn']),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimer(dynamic checkIn) {
+    if (checkIn == null || checkIn is! Timestamp) return const SizedBox();
+    
+    return StreamBuilder(
+      stream: Stream.periodic(const Duration(seconds: 1)),
+      builder: (context, _) {
+        final duration = DateTime.now().difference(checkIn.toDate());
+        final hours = duration.inHours.toString().padLeft(2, '0');
+        final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
+        final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+        
+        return Text(
+          "Tiempo transcurrido: $hours:$minutes:$seconds",
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        );
+      },
+    );
+  }
+
+  Widget _buildPunchButton(int status, String userId, String companyId) {
+    bool isCompleted = status == 2;
+    bool isWorking = status == 1;
+
+    return GestureDetector(
+      onTap: isCompleted || _isLoading ? null : () => _handleAction(status, userId, companyId),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 220,
+        height: 220,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isCompleted ? Colors.grey[200] : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: (isWorking ? Colors.red : AppColors.accentPrimary).withOpacity(isCompleted ? 0.05 : 0.2),
+              blurRadius: 30,
+              spreadRadius: 5,
+              offset: const Offset(0, 10),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performCheckOut(userId);
-              },
-              child: const Text("SALIDA"),
+          ],
+          border: Border.all(
+            color: isWorking ? Colors.red.withOpacity(0.2) : AppColors.accentPrimary.withOpacity(0.1),
+            width: 8,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isWorking ? Icons.exit_to_app : Icons.fingerprint,
+              color: isCompleted ? Colors.grey : (isWorking ? Colors.red : AppColors.accentPrimary),
+              size: 70,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isWorking ? "MARCAR SALIDA" : (isCompleted ? "PUESTO CERRADO" : "MARCAR ENTRADA"),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isCompleted ? Colors.grey : (isWorking ? Colors.red : AppColors.accentPrimary),
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                letterSpacing: 1,
+              ),
             ),
           ],
         ),
-      );
+      ),
+    );
   }
 
-  Future<void> _performCheckIn(String userId, String companyId) async {
-     await _firestoreService.logCheckIn(userId, companyId);
-     if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Entrada Registrada')));
+  Widget _buildInfoCards(Map<String, dynamic>? data) {
+    final checkIn = data?['checkIn'] as Timestamp?;
+    final checkOut = data?['checkOut'] as Timestamp?;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          _infoTile("Entrada", checkIn != null ? DateFormat.Hm().format(checkIn.toDate()) : "--:--", Icons.login, Colors.green),
+          const SizedBox(width: 16),
+          _infoTile("Salida", checkOut != null ? DateFormat.Hm().format(checkOut.toDate()) : "--:--", Icons.logout, Colors.orange),
+        ],
+      ),
+    );
   }
 
-  Future<void> _performCheckOut(String userId) async {
-     await _firestoreService.logCheckOut(userId);
-     if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Salida Registrada')));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) return const LoadingScreen();
-
-    return Column(
-      children: [
-        // --- Header ---
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-          ),
-          child: Column(
-            children: const [
-              Text(
-                'CONTROL DE ASISTENCIA',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  letterSpacing: 2.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20),
-              // ISOLATED CLOCK WIDGET
-              DigitalClockWidget(), 
-            ],
-          ),
+  Widget _infoTile(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
         ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+      ),
+    );
+  }
 
-        // --- Active Interaction ---
-        Expanded(
-          child: SingleChildScrollView(
+  Widget _buildHistorySection(String userId) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "HISTORIAL RECIENTE",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12, letterSpacing: 1),
+          ),
+          const SizedBox(height: 16),
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _firestoreService.getUserAttendance(userId),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox();
+              final logs = snapshot.data!;
+              if (logs.isEmpty) return const Center(child: Text("Sin registros previos"));
+
+              return Column(
+                children: logs.map((log) => _buildHistoryItem(log)).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(Map<String, dynamic> log) {
+    final checkIn = log['checkIn'] as Timestamp?;
+    final checkOut = log['checkOut'] as Timestamp?;
+    final dateStr = log['date'] as String? ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: Colors.blueGrey[50], borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.calendar_today, size: 18, color: Colors.blueGrey),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
-                
-                // Big Button
-                GestureDetector(
-                  onTap: _handleCheckInOut,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [AppColors.accentPrimary, AppColors.accentSecondary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accentPrimary.withOpacity(0.4),
-                          blurRadius: 30,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+                Text(dateStr, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Text(
+                      checkOut != null ? "Completado" : "Solo entrada",
+                      style: TextStyle(color: checkOut != null ? Colors.green : Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.fingerprint, color: Colors.white, size: 64),
-                        SizedBox(height: 12),
-                        Text(
-                          "REGISTRAR",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                // Recent Activity
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "ACTIVIDAD RECIENTE",
-                        style: TextStyle(
-                          color: AppColors.contentSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 1.0,
-                        ),
+                    if (checkIn != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                         (checkIn.toDate().hour < 9 || (checkIn.toDate().hour == 9 && checkIn.toDate().minute <= 10)) 
+                         ? "• Puntual" : "• Retraso",
+                         style: TextStyle(
+                           color: (checkIn.toDate().hour < 9 || (checkIn.toDate().hour == 9 && checkIn.toDate().minute <= 10)) 
+                           ? Colors.blue : Colors.red, 
+                           fontSize: 11, 
+                           fontWeight: FontWeight.bold
+                         ),
                       ),
-                      const SizedBox(height: 16),
-                      
-                      Builder(
-                        builder: (context) {
-                          return StreamBuilder<List<Map<String, dynamic>>>(
-                            stream: _attendanceStream,
-                            builder: (context, snapshot) {
-                              if (snapshot.hasError) {
-                                // IMPROVED ERROR HANDLING UI
-                                return Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.error_outline, color: Colors.red),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: Text("Error de base de datos. Verifica la consola o los índices.", style: TextStyle(color: Colors.red[900], fontSize: 12))),
-                                    ],
-                                  ),
-                                );
-                              }
-                              if (!snapshot.hasData) {
-                                return const Center(child: CircularProgressIndicator());
-                              }
-                              
-                              final logs = snapshot.data!;
-                              if (logs.isEmpty) {
-                                return Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 10,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Center(child: Text("Sin registros hoy")),
-                                );
-                              }
-
-                              return Column(
-                                children: logs.take(3).map((log) {
-                                   final date = log['date'] as String? ?? '';
-                                   // Simple status logic: if checkout exists, completed.
-                                   final status = log['checkOut'] != null ? 'Completado' : 'Entrada'; 
-                                   
-                                   return Container(
-                                     margin: const EdgeInsets.only(bottom: 12),
-                                     padding: const EdgeInsets.all(16),
-                                     decoration: BoxDecoration(
-                                       color: Colors.white,
-                                       borderRadius: BorderRadius.circular(16),
-                                       boxShadow: [
-                                         BoxShadow(
-                                           color: Colors.black.withOpacity(0.03),
-                                           blurRadius: 10,
-                                           offset: const Offset(0, 4),
-                                         ),
-                                       ],
-                                     ),
-                                     child: Row(
-                                       children: [
-                                         Container(
-                                           padding: const EdgeInsets.all(10),
-                                           decoration: BoxDecoration(
-                                             color: AppColors.backgroundSubtle,
-                                             borderRadius: BorderRadius.circular(12),
-                                           ),
-                                           child: const Icon(Icons.history, color: AppColors.contentSecondary),
-                                         ),
-                                         const SizedBox(width: 16),
-                                         Expanded(
-                                           child: Column(
-                                             crossAxisAlignment: CrossAxisAlignment.start,
-                                             children: [
-                                                Text(date, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                                Text(status.toUpperCase(), style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
-                                             ],
-                                           ),
-                                         ),
-                                         const Icon(Icons.chevron_right, color: Colors.grey),
-                                       ],
-                                     ),
-                                   );
-                                }).toList(),
-                              );
-                            },
-                          );
-                        }
-                      ),
-                    ],
-                  ),
+                    ]
+                  ],
                 ),
-                const SizedBox(height: 100), 
               ],
             ),
           ),
-        ),
-      ],
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(checkIn != null ? DateFormat.Hm().format(checkIn.toDate()) : "--", style: const TextStyle(fontSize: 13)),
+              Text(checkOut != null ? DateFormat.Hm().format(checkOut.toDate()) : "--", style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _handleAction(int status, String userId, String companyId) async {
+    if (companyId.isEmpty) {
+      _showError("No tienes una empresa asignada. Contacta a soporte.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      if (status == 0) {
+        await _firestoreService.logCheckIn(userId, companyId);
+        _showSuccess("¡Entrada registrada!");
+      } else if (status == 1) {
+        await _firestoreService.logCheckOut(userId);
+        _showSuccess("¡Salida registrada!");
+      }
+    } catch (e) {
+      _showError(e.toString());
+    }
+    setState(() => _isLoading = false);
+  }
+
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("✅ $msg"), backgroundColor: Colors.green));
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("❌ Error: $msg"), backgroundColor: Colors.red));
   }
 }
 

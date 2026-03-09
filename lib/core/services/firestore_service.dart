@@ -424,14 +424,16 @@ class FirestoreService {
 
   // --- ATTENDANCE ---
   
-  // Registrar asistencia (Check-in / Check-out)
-  // Simple version: creates a new document for each event or updates today's doc.
-  // We'll use a document per day per user: `attendance/{companyId}/days/{date}/records/{userId}`
-  // Simplified: `attendance/{recordId}` with userId, date, checkIn, checkOut
-  
+  // Obtener el registro de asistencia de hoy para un usuario
+  Stream<DocumentSnapshot?> getTodayAttendanceStream(String userId) {
+    final now = DateTime.now();
+    final todayStr = "${now.year}-${now.month}-${now.day}"; 
+    final recordId = "${userId}_$todayStr";
+    return _db.collection('attendance').doc(recordId).snapshots();
+  }
+
   Future<void> logCheckIn(String userId, String companyId) async {
     final now = DateTime.now();
-    // Normalizar fecha (sin hora) para buscar si ya existe registro hoy
     final todayStr = "${now.year}-${now.month}-${now.day}"; 
     final recordId = "${userId}_$todayStr";
     
@@ -444,7 +446,8 @@ class FirestoreService {
         'companyId': companyId,
         'date': todayStr,
         'checkIn': FieldValue.serverTimestamp(),
-        'status': 'present', // podria ser 'late' si comparamos con horario
+        'status': 'present',
+        'timestamp': FieldValue.serverTimestamp(), // Para facilitar ordenamiento
       });
     }
   }
@@ -454,9 +457,14 @@ class FirestoreService {
     final todayStr = "${now.year}-${now.month}-${now.day}"; 
     final recordId = "${userId}_$todayStr";
     
-    await _db.collection('attendance').doc(recordId).update({
-      'checkOut': FieldValue.serverTimestamp(),
-    });
+    final docRef = _db.collection('attendance').doc(recordId);
+    final doc = await docRef.get();
+    
+    if (doc.exists) {
+      await docRef.update({
+        'checkOut': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   // Obtener asistencia de un usuario

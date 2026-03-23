@@ -353,9 +353,12 @@ class _TeamScreenState extends State<TeamScreen> {
   }
 
   void _showEditEmployeeDialog(User employee) {
-    final TextEditingController positionController = TextEditingController(text: employee.position);
-    final TextEditingController departmentController = TextEditingController(text: employee.department);
+    String? selectedPosition = employee.position;
+    String? selectedDepartment = employee.department;
+    String? selectedContractType = employee.contractType;
+    DateTime? selectedHireDate = employee.hireDate?.toDate();
     List<String> assignedBenefits = List<String>.from(employee.assignedBenefits);
+    bool isLoading = false;
     
     showDialog(
       context: context,
@@ -366,46 +369,86 @@ class _TeamScreenState extends State<TeamScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Text('Editar: ${employee.name.split(' ')[0]}'),
               content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: positionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Puesto / Cargo',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: departmentController,
-                      decoration: const InputDecoration(
-                        labelText: 'Departamento',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Prestaciones Asignadas',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    // Cargar beneficios de la empresa
-                    FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance.collection('companies').doc(widget.currentUser.companyId).get(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const LinearProgressIndicator();
-                        
-                        final companyData = snapshot.data!.data() as Map<String, dynamic>?;
-                        final companyBenefits = List<Map<String, dynamic>>.from(companyData?['benefits'] ?? []);
-                        
-                        if (companyBenefits.isEmpty) {
-                          return const Text('No hay prestaciones creadas en la empresa.', style: TextStyle(fontSize: 12, color: Colors.grey));
-                        }
+                child: FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('companies').doc(widget.currentUser.companyId).get(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator());
+                    
+                    final companyData = snapshot.data!.data() as Map<String, dynamic>?;
+                    final availableDepartments = List<String>.from(companyData?['departments'] ?? []);
+                    final availablePositions = List<String>.from(companyData?['jobTitles'] ?? []);
+                    final companyBenefits = List<Map<String, dynamic>>.from(companyData?['benefits'] ?? []);
 
-                        return Column(
-                          children: companyBenefits.map((benefit) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: availableDepartments.contains(selectedDepartment) ? selectedDepartment : null,
+                          decoration: const InputDecoration(
+                            labelText: 'Departamento', 
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                          ),
+                          items: availableDepartments.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          onChanged: availableDepartments.isEmpty ? null : (val) => setDialogState(() => selectedDepartment = val),
+                          hint: Text(availableDepartments.isEmpty ? "Aún no creado (Ve a Organización)" : "Selecciona uno"),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: availablePositions.contains(selectedPosition) ? selectedPosition : null,
+                          decoration: const InputDecoration(
+                            labelText: 'Puesto / Cargo', 
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                          ),
+                          items: availablePositions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          onChanged: availablePositions.isEmpty ? null : (val) => setDialogState(() => selectedPosition = val),
+                          hint: Text(availablePositions.isEmpty ? "Aún no creado (Ve a Organización)" : "Selecciona uno"),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: ['Planta', 'Temporal', 'Prácticas', 'Honorarios'].contains(selectedContractType) ? selectedContractType : null,
+                          decoration: const InputDecoration(
+                            labelText: 'Tipo de Contrato', 
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'Planta', child: Text('Planta')),
+                            DropdownMenuItem(value: 'Temporal', child: Text('Temporal')),
+                            DropdownMenuItem(value: 'Prácticas', child: Text('Prácticas')),
+                            DropdownMenuItem(value: 'Honorarios', child: Text('Honorarios')),
+                          ],
+                          onChanged: (val) => setDialogState(() => selectedContractType = val),
+                        ),
+                        const SizedBox(height: 16),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedHireDate ?? DateTime.now(),
+                              firstDate: DateTime(1980),
+                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) setDialogState(() => selectedHireDate = picked);
+                          },
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: "Fecha de Contratación",
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                            ),
+                            child: Text(selectedHireDate != null ? DateFormat('dd/MM/yyyy').format(selectedHireDate!) : 'Seleccionar fecha...'),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text('Prestaciones Asignadas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        if (companyBenefits.isEmpty)
+                          const Text('No hay prestaciones creadas en la empresa.', style: TextStyle(fontSize: 12, color: Colors.grey))
+                        else
+                          ...companyBenefits.map((benefit) {
                             final title = benefit['title'] as String;
                             final isSelected = assignedBenefits.contains(title);
                             
@@ -424,11 +467,10 @@ class _TeamScreenState extends State<TeamScreen> {
                                 });
                               },
                             );
-                          }).toList(),
-                        );
-                      },
-                    ),
-                  ],
+                          }),
+                      ],
+                    );
+                  },
                 ),
               ),
               actions: [
@@ -437,12 +479,19 @@ class _TeamScreenState extends State<TeamScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentPrimary),
+                  onPressed: isLoading ? null : () async {
+                    setDialogState(() => isLoading = true);
                     try {
                       final Map<String, dynamic> updateData = {
-                        'position': positionController.text.trim(),
-                        'department': departmentController.text.trim(),
+                        'position': selectedPosition ?? employee.position ?? '',
+                        'department': selectedDepartment ?? employee.department ?? '',
+                        'contractType': selectedContractType ?? employee.contractType,
                       };
+                      
+                      if (selectedHireDate != null) {
+                        updateData['hireDate'] = Timestamp.fromDate(selectedHireDate!);
+                      }
                       
                       // Actualizar datos básicos
                       await _firestoreService.updateUserFields(employee.uid, updateData);
@@ -457,18 +506,21 @@ class _TeamScreenState extends State<TeamScreen> {
                       if (context.mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('✅ Empleado actualizado correctamente')),
+                          const SnackBar(content: Text('✅ Empleado actualizado correctamente'), backgroundColor: Colors.green),
                         );
                       }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
+                          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
                         );
+                        setDialogState(() => isLoading = false);
                       }
                     }
                   },
-                  child: const Text('Guardar Cambios'),
+                  child: isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Guardar Cambios', style: TextStyle(color: Colors.white)),
                 ),
               ],
             );

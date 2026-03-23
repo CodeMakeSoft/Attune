@@ -121,8 +121,8 @@ class _ProfileFormState extends State<ProfileForm> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
-      final dept = widget.availableDepartments.isNotEmpty ? _selectedDepartment : _departmentController.text;
-      final pos = widget.availablePositions.isNotEmpty ? _selectedPosition : _positionController.text;
+      final dept = widget.availableDepartments.isNotEmpty ? _selectedDepartment : widget.user?.department;
+      final pos = widget.availablePositions.isNotEmpty ? _selectedPosition : widget.user?.position;
        
       final fullUpdatedUser = User(
         uid: widget.user!.uid,
@@ -287,7 +287,6 @@ class _ProfileFormState extends State<ProfileForm> {
     );
   }
 
-  // UPDATE _buildJobSection
   Widget _buildJobSection() {
     final enabled = widget.permissions.canEditJob;
     return Column(
@@ -295,63 +294,97 @@ class _ProfileFormState extends State<ProfileForm> {
       children: [
         _buildSectionHeader("Información Laboral", FontAwesomeIcons.briefcase),
         
-        if (widget.availableDepartments.isNotEmpty)
+        if (enabled) ...[
           _buildDropdown(
             label: "Departamento", 
             value: _selectedDepartment, 
             items: widget.availableDepartments, 
-            enabled: enabled, 
+            enabled: true, 
             onChanged: (v) => setState(() => _selectedDepartment = v),
-          )
-        else
-          _buildTextField(
-            label: "Departamento",
-            controller: _departmentController,
-            enabled: enabled,
-            icon: FontAwesomeIcons.building,
+            hint: widget.availableDepartments.isEmpty ? "Configurar en Organización" : "Selecciona un departamento",
           ),
-          
-        const SizedBox(height: 16),
-        
-        if (widget.availablePositions.isNotEmpty)
+          const SizedBox(height: 16),
           _buildDropdown(
             label: "Puesto", 
             value: _selectedPosition, 
             items: widget.availablePositions, 
-            enabled: enabled, 
+            enabled: true, 
             onChanged: (v) => setState(() => _selectedPosition = v),
-          )
-        else
+            hint: widget.availablePositions.isEmpty ? "Configurar en Organización" : "Selecciona un puesto",
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdown(
+                  label: "Tipo Contrato",
+                  value: _contractType,
+                  items: const ['Planta', 'Temporal', 'Prácticas', 'Honorarios'],
+                  enabled: true,
+                  onChanged: (v) => setState(() => _contractType = v),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildDatePicker(
+                  label: "F. Contratación",
+                  selectedDate: _hireDate,
+                  enabled: true,
+                  onChanged: (d) => setState(() => _hireDate = d),
+                ),
+              ),
+            ],
+          ),
+        ] else ...[
+          // MODO DE SOLO LECTURA PARA EL PERFIL DEL EMPLEADO
+          _buildTextField(
+            label: "Departamento",
+            controller: TextEditingController(
+              text: (widget.user?.department?.isNotEmpty == true) 
+                  ? widget.user!.department 
+                  : 'No asignado',
+            ),
+            enabled: false,
+            icon: FontAwesomeIcons.building,
+          ),
+          const SizedBox(height: 16),
           _buildTextField(
             label: "Puesto",
-            controller: _positionController,
-            enabled: enabled,
+            controller: TextEditingController(
+              text: (widget.user?.position?.isNotEmpty == true) 
+                  ? widget.user!.position 
+                  : 'No asignado',
+            ),
+            enabled: false,
             icon: FontAwesomeIcons.idBadge,
           ),
-
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdown(
-                label: "Tipo Contrato",
-                value: _contractType,
-                items: ['Planta', 'Temporal', 'Prácticas'],
-                enabled: enabled,
-                onChanged: (v) => setState(() => _contractType = v),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  label: "Tipo Contrato",
+                  controller: TextEditingController(text: _contractType ?? 'No asignado'),
+                  enabled: false,
+                  icon: FontAwesomeIcons.fileSignature,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildDatePicker(
-                label: "F. Contratación",
-                selectedDate: _hireDate,
-                enabled: enabled,
-                onChanged: (d) => setState(() => _hireDate = d),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  label: "F. Contratación",
+                  controller: TextEditingController(
+                    text: _hireDate != null 
+                        ? "${_hireDate!.day.toString().padLeft(2, '0')}/${_hireDate!.month.toString().padLeft(2, '0')}/${_hireDate!.year}"
+                        : 'No asignada'
+                  ),
+                  enabled: false,
+                  icon: FontAwesomeIcons.calendarDay,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -489,6 +522,7 @@ class _ProfileFormState extends State<ProfileForm> {
     required List<String> items,
     required bool enabled,
     required Function(String?) onChanged,
+    String? hint,
   }) {
     return DropdownButtonFormField<String>(
       initialValue: items.contains(value) ? value : null,
@@ -496,6 +530,7 @@ class _ProfileFormState extends State<ProfileForm> {
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       decoration: InputDecoration(
         labelText: label,
+        hintText: hint,
         prefixIcon: const Icon(FontAwesomeIcons.list, size: 18),
       ),
     );

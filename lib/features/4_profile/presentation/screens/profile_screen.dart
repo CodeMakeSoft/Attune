@@ -85,12 +85,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       stream: _firestoreService.getUserStream(),
       builder: (context, snapshot) {
         final user = snapshot.data ?? widget.currentUser;
-        
-        final isActiveSuperAdmin = user.role == 'super_admin';
-
-        final permissions = ProfilePermissions(
+        final permissions = const ProfilePermissions(
           canEditPersonal: true,
-          canEditJob: isActiveSuperAdmin, 
+          canEditJob: false, // Nadie cambia su departamento/puesto desde Mi Perfil
           canEditLegal: true,
         );
 

@@ -11,6 +11,7 @@ import 'package:attune/features/14_benefits/presentation/screens/benefits_screen
 
 import 'package:attune/core/widgets/generic_placeholder_screen.dart';
 import 'package:attune/features/13_support/presentation/screens/support_screen.dart';
+import 'package:attune/features/8_organization/presentation/screens/schedule_screen.dart';
 
 class AdminDashboardView extends StatelessWidget {
   final User currentUser;
@@ -31,6 +32,16 @@ class AdminDashboardView extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const EmployeeListScreen()),
+            );
+          },
+        ),
+        DashboardGridButton(
+          icon: FontAwesomeIcons.solidClock,
+          label: 'Horarios',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ScheduleScreen(companyId: currentUser.companyId)),
             );
           },
         ),

@@ -193,10 +193,11 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                     children: [
                       // Dropdown (Vacaciones, Enfermedad, Personal)
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         value: selectedType,
                         decoration: const InputDecoration(labelText: 'Tipo de Permiso'),
                         items: ['Vacaciones', 'Enfermedad', 'Asunto Personal']
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                            .map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (v) => setDialogState(() => selectedType = v!),
                       ),
                       const SizedBox(height: 16),

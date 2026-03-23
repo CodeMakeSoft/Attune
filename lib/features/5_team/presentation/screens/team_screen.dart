@@ -384,30 +384,33 @@ class _TeamScreenState extends State<TeamScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         DropdownButtonFormField<String>(
+                          isExpanded: true,
                           value: availableDepartments.contains(selectedDepartment) ? selectedDepartment : null,
                           decoration: const InputDecoration(
                             labelText: 'Departamento', 
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
                           ),
-                          items: availableDepartments.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          items: availableDepartments.map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
                           onChanged: availableDepartments.isEmpty ? null : (val) => setDialogState(() => selectedDepartment = val),
-                          hint: Text(availableDepartments.isEmpty ? "Aún no creado (Ve a Organización)" : "Selecciona uno"),
+                          hint: Text(availableDepartments.isEmpty ? "Aún no creado" : "Selecciona uno"),
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
+                          isExpanded: true,
                           value: availablePositions.contains(selectedPosition) ? selectedPosition : null,
                           decoration: const InputDecoration(
                             labelText: 'Puesto / Cargo', 
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
                           ),
-                          items: availablePositions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          items: availablePositions.map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
                           onChanged: availablePositions.isEmpty ? null : (val) => setDialogState(() => selectedPosition = val),
-                          hint: Text(availablePositions.isEmpty ? "Aún no creado (Ve a Organización)" : "Selecciona uno"),
+                          hint: Text(availablePositions.isEmpty ? "Aún no creado" : "Selecciona uno"),
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
+                          isExpanded: true,
                           value: ['Planta', 'Temporal', 'Prácticas', 'Honorarios'].contains(selectedContractType) ? selectedContractType : null,
                           decoration: const InputDecoration(
                             labelText: 'Tipo de Contrato', 
@@ -415,10 +418,10 @@ class _TeamScreenState extends State<TeamScreen> {
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'Planta', child: Text('Planta')),
-                            DropdownMenuItem(value: 'Temporal', child: Text('Temporal')),
-                            DropdownMenuItem(value: 'Prácticas', child: Text('Prácticas')),
-                            DropdownMenuItem(value: 'Honorarios', child: Text('Honorarios')),
+                            DropdownMenuItem(value: 'Planta', child: Text('Planta', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'Temporal', child: Text('Temporal', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'Prácticas', child: Text('Prácticas', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'Honorarios', child: Text('Honorarios', overflow: TextOverflow.ellipsis)),
                           ],
                           onChanged: (val) => setDialogState(() => selectedContractType = val),
                         ),

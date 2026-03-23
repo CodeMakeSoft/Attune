@@ -525,9 +525,10 @@ class _ProfileFormState extends State<ProfileForm> {
     String? hint,
   }) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: items.contains(value) ? value : null,
       onChanged: enabled ? onChanged : null,
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

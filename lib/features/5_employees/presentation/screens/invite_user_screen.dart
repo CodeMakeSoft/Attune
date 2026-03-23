@@ -84,14 +84,15 @@ class _InviteUserScreenState extends State<InviteUserScreen> {
 
               // Selector de Rol
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _selectedRole,
                 decoration: const InputDecoration(
                   labelText: 'Rol Asignado',
                   prefixIcon: Icon(Icons.admin_panel_settings_outlined),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'user', child: Text('Empleado (User)')),
-                  DropdownMenuItem(value: 'admin', child: Text('Administrador (Admin)')),
+                  DropdownMenuItem(value: 'user', child: Text('Empleado (User)', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'admin', child: Text('Administrador (Admin)', overflow: TextOverflow.ellipsis)),
                 ],
                 onChanged: (value) {
                   setState(() {

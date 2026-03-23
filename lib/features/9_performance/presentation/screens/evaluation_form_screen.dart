@@ -21,7 +21,29 @@ class EvaluationFormScreen extends StatefulWidget {
 class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isCheckingStatus = true;
+  bool _alreadyEvaluated = false;
   
+  @override
+  void initState() {
+    super.initState();
+    _checkEvaluationStatus();
+  }
+
+  Future<void> _checkEvaluationStatus() async {
+    DateTime now = DateTime.now();
+    int year = now.year;
+    int weekOfYear = ((now.difference(DateTime(year, 1, 1)).inDays) / 7).ceil() + 1;
+    
+    bool hasEvaluated = await FirestoreService().hasEvaluatedThisWeek(widget.employee.uid, weekOfYear, year);
+    if (mounted) {
+      setState(() {
+        _alreadyEvaluated = hasEvaluated;
+        _isCheckingStatus = false;
+      });
+    }
+  }
+
   final Map<String, int> _scores = {
     'Responsabilidad': 0,
     'Calidad de Trabajo': 0,
@@ -56,6 +78,10 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       double sum = _scores.values.fold(0, (prev, element) => prev + element);
       double average = sum / _scores.length;
 
+      DateTime now = DateTime.now();
+      int year = now.year;
+      int weekOfYear = ((now.difference(DateTime(year, 1, 1)).inDays) / 7).ceil() + 1;
+
       final evaluation = Evaluation(
         id: '',
         employeeId: widget.employee.uid,
@@ -63,10 +89,12 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
         evaluatorId: widget.evaluator.uid,
         evaluatorName: widget.evaluator.name,
         companyId: widget.employee.companyId,
-        date: DateTime.now(),
+        date: now,
         scores: _scores,
         overallAverage: average,
         feedback: _feedbackController.text.trim(),
+        weekOfYear: weekOfYear,
+        year: year,
       );
 
       await FirestoreService().addEvaluation(evaluation);
@@ -148,7 +176,11 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: Form(
+      body: _isCheckingStatus 
+          ? const Center(child: CircularProgressIndicator())
+          : _alreadyEvaluated
+              ? _buildAlreadyEvaluatedState()
+              : Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -247,7 +279,39 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
                 : const Text("Finalizar Evaluación", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlreadyEvaluatedState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.green, size: 80),
+            const SizedBox(height: 24),
+            const Text(
+              'Evaluación Completa',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Ya realizaste la evaluación de ${widget.employee.name.split(' ')[0]} para esta semana.',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Volver al equipo'),
+            ),
           ],
         ),
       ),

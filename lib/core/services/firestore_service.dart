@@ -464,6 +464,18 @@ class FirestoreService {
     await _db.collection('evaluations').add(evaluation.toJson());
   }
 
+  Future<bool> hasEvaluatedThisWeek(String employeeId, int weekOfYear, int year) async {
+    final query = await _db
+        .collection('evaluations')
+        .where('employeeId', isEqualTo: employeeId)
+        .where('weekOfYear', isEqualTo: weekOfYear)
+        .where('year', isEqualTo: year)
+        .limit(1)
+        .get();
+        
+    return query.docs.isNotEmpty;
+  }
+
   Stream<List<Evaluation>> getEmployeeEvaluations(String employeeId) {
     return _db
         .collection('evaluations')

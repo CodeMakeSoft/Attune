@@ -1,5 +1,7 @@
 import 'package:attune/app/auth_gate.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:attune/features/9_performance/presentation/screens/statistics_screen.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/features/4_profile/presentation/widgets/profile_form.dart';
@@ -118,18 +120,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildProfileHeader(user),
                 const SizedBox(height: 32),
                 
-                // Nueva sección de Beneficios
-                _buildBenefitsSection(user),
-                const SizedBox(height: 32),
-                
                 ProfileForm(
-                  user: user,
+                  user: _user!,
                   permissions: permissions,
                   onSave: _handleSave,
                   isLoading: _isSaving,
                   availableDepartments: _departments,
                   availablePositions: _positions,
                 ),
+                const SizedBox(height: 24),
+                _buildStatisticsButton(context, _user!),
+                const SizedBox(height: 24),
+                _buildBenefitsSection(_user!),
               ],
             ),
           ),
@@ -274,6 +276,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
               )).toList(),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatisticsButton(BuildContext context, User user) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Theme.of(context).primaryColor, AppColors.accentPrimary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentPrimary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StatisticsScreen(employeeId: user.uid, employeeName: user.name),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(FontAwesomeIcons.chartLine, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mi Desempeño',
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Ver gráfica y estadísticas semanales',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

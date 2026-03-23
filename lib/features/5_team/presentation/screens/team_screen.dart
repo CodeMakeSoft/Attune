@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:attune/core/models/user_model.dart';
 import 'package:attune/core/services/firestore_service.dart';
+import 'package:attune/features/9_performance/presentation/screens/statistics_screen.dart';
 import 'package:attune/utils/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -257,8 +258,38 @@ class _TeamScreenState extends State<TeamScreen> {
                     employee.hireDate != null ? DateFormat('dd/MM/yyyy').format(employee.hireDate!.toDate()) : 'No registrada'),
                   _buildDetailRow(Icons.assignment_ind_outlined, 'Tipo de contrato', employee.contractType ?? 'No registrado'),
                   
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentPrimary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.accentPrimary.withOpacity(0.2)),
+                    ),
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StatisticsScreen(employeeId: employee.uid, employeeName: employee.name),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.bar_chart_rounded, color: AppColors.accentPrimary),
+                      label: const Text(
+                        'Ver estadísticas de desempeño',
+                        style: TextStyle(color: AppColors.accentPrimary, fontWeight: FontWeight.w900, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+
                   if (canDelete) ...[
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(

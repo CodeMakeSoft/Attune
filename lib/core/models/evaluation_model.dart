@@ -11,6 +11,8 @@ class Evaluation {
   final Map<String, int> scores; // e.g., {'Responsabilidad': 5, 'Trabajo en equipo': 4}
   final double overallAverage;
   final String feedback;
+  final int weekOfYear;
+  final int year;
 
   Evaluation({
     required this.id,
@@ -23,6 +25,8 @@ class Evaluation {
     required this.scores,
     required this.overallAverage,
     required this.feedback,
+    required this.weekOfYear,
+    required this.year,
   });
 
   factory Evaluation.fromFirestore(DocumentSnapshot doc) {
@@ -38,6 +42,8 @@ class Evaluation {
       scores: Map<String, int>.from(data['scores'] ?? {}),
       overallAverage: (data['overallAverage'] ?? 0).toDouble(),
       feedback: data['feedback'] ?? '',
+      weekOfYear: data['weekOfYear'] ?? 0,
+      year: data['year'] ?? 0,
     );
   }
 
@@ -52,6 +58,8 @@ class Evaluation {
       'scores': scores,
       'overallAverage': overallAverage,
       'feedback': feedback,
+      'weekOfYear': weekOfYear,
+      'year': year,
     };
   }
 }

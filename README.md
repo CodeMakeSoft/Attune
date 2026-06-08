@@ -1,4 +1,4 @@
-# Attune - Gestión de Recursos Humanos (SaaS)
+# Attune — Gestión de Recursos Humanos (SaaS)
 
 ![Attune Logo](assets/images/logo.png)
 
@@ -6,41 +6,63 @@
 
 ---
 
-## 🎯 Entregables del Proyecto (Documentación Oficial)
+## Tabla de Contenidos
 
-La documentación completa del proyecto (que incluye el diseño detallado y análisis) se encuentra compilada en nuestro documento oficial en PDF que puedes solicitar o buscar en la rama de documentación:
-
-1. **SRS (Especificación de Requisitos de Software):** Contiene la recopilación de historias de usuario, reglas de negocio y restricciones no funcionales (Capítulo 4 del Documento Oficial).
-2. **Diseño Arquitectónico:** Presentación del patrón de arquitectura (Clean Architecture), Modelos de Datos en Firebase y flujos de interacción (Capítulo 6 del Documento Oficial).
-3. **Diseño de Interfaces (UI/UX):** Mapas de navegación, componentes atómicos y paleta cromática utilizada en el desarrollo (Capítulo 6 del Documento Oficial).
-4. **Informe de Hallazgos de Pruebas:** Reporte completo de defectos detectados durante las pruebas (Overflows, lógicas de evaluación, accesos) y sus respectivas resoluciones (Capítulo 9 del Documento Oficial).
+- [Documentación Oficial](#documentación-oficial)
+- [Arquitectura y Tecnologías](#arquitectura-y-tecnologías)
+- [Características Principales](#características-principales)
+- [Instalación y Configuración](#instalación-y-configuración)
+  - [Linux](#linux-ubuntu--debian--fedora)
+  - [Windows](#windows)
+- [Configuración del Proyecto](#configuración-del-proyecto)
+- [Configuración de Firebase](#configuración-de-firebase)
+- [Ejecución](#ejecución)
+- [Pruebas](#pruebas)
+- [Compilación para Producción](#compilación-para-producción)
+- [Solución de Problemas](#solución-de-problemas)
 
 ---
 
-## 🛠 Arquitectura y Tecnologías
+## Documentación Oficial
 
-- **Frontend / Framework:** Flutter (Dart) `>=3.9.2`
-- **Backend / Base de Datos:** Firebase (Cloud Firestore & Authentication)
-- **Gestión del Estado:** State Management nativo apoyado en inyección de dependencias ligeras.
-- **Gráficos e Informes:** `fl_chart` para renderizado dinámico de estadísticas de rendimiento de empleados.
-- **Arquitectura:** Componentizada por Roles (Empleado, Administrador, Super Admin), estructurando las vistas separadas de la lógica de negocio (Servicios).
+La documentación completa del proyecto se encuentra compilada en el documento oficial en PDF, disponible en la rama de documentación:
 
-## 🚀 Características Principales
+1. **SRS (Especificación de Requisitos de Software):** Historias de usuario, reglas de negocio y restricciones no funcionales (Capítulo 4).
+2. **Diseño Arquitectónico:** Patrón Clean Architecture, modelos de datos en Firebase y flujos de interacción (Capítulo 6).
+3. **Diseño de Interfaces (UI/UX):** Mapas de navegación, componentes atómicos y paleta cromática (Capítulo 6).
+4. **Informe de Hallazgos de Pruebas:** Defectos detectados durante las pruebas y sus resoluciones (Capítulo 9).
+
+---
+
+## Arquitectura y Tecnologías
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend / Framework | Flutter (Dart) `>=3.9.2` |
+| Backend / Base de Datos | Firebase — Cloud Firestore y Authentication |
+| Gestión del Estado | State Management nativo con inyección de dependencias ligera |
+| Gráficos e Informes | `fl_chart` para estadísticas de rendimiento |
+| Arquitectura | Clean Architecture por roles (Empleado, Administrador, Super Admin) |
+
+---
+
+## Características Principales
 
 - **Dashboard por Roles:** Paneles únicos dependiendo de los privilegios del usuario.
-- **Estructura Organizacional:** Creación y asignación de Puestos y Departamentos en tiempo real.
-- **Métricas y Desempeño:** Sistema de evaluaciones de desempeño semanales que previene la duplicidad de datos y calcula gráficas interactivas.
-- **Directorio y Equipo:** Panel completo de empleados donde se puede dar de baja, editar información fiscal/contractual y ver el estatus de nómina.
+- **Estructura Organizacional:** Creación y asignación de puestos y departamentos en tiempo real.
+- **Métricas y Desempeño:** Evaluaciones de desempeño semanales con gráficas interactivas y prevención de duplicidad.
+- **Directorio y Equipo:** Panel de empleados con gestión de baja, edición de datos fiscales/contractuales y estatus de nómina.
+- **Notificaciones Push:** Integración con Firebase Cloud Messaging (FCM).
 
 ---
 
-## 💻 Instalación y Configuración
+## Instalación y Configuración
 
-> Sigue la guía correspondiente a tu sistema operativo.
+Sigue la guía correspondiente a tu sistema operativo antes de continuar.
 
 ---
 
-### 🐧 Linux (Ubuntu / Debian / Fedora)
+### Linux (Ubuntu / Debian / Fedora)
 
 #### 1. Instalar dependencias del sistema
 
@@ -75,7 +97,7 @@ mv flutter ~/development/
 #### 3. Agregar Flutter al PATH
 
 ```bash
-# Editar el archivo de configuración de tu shell
+# Agregar al archivo de configuración del shell
 echo 'export PATH="$HOME/development/flutter/bin:$PATH"' >> ~/.bashrc
 
 # Recargar la configuración
@@ -87,14 +109,13 @@ flutter --version
 
 > Si usas **Zsh** en lugar de Bash, reemplaza `~/.bashrc` por `~/.zshrc`.
 
-#### 4. Instalar Android Studio (para emulador Android)
+#### 4. Instalar Android Studio
 
 ```bash
-# Descargar Android Studio desde la web oficial:
-# https://developer.android.com/studio
-
-# Alternativa con snap:
+# Alternativa con snap
 sudo snap install android-studio --classic
+
+# Referencia oficial: https://developer.android.com/studio
 
 # Aceptar licencias de Android SDK
 flutter doctor --android-licenses
@@ -103,9 +124,11 @@ flutter doctor --android-licenses
 #### 5. Instalar Java (requerido por Android SDK)
 
 ```bash
-sudo apt install -y openjdk-17-jdk   # Ubuntu/Debian
-# o
-sudo dnf install -y java-17-openjdk  # Fedora
+# Ubuntu / Debian
+sudo apt install -y openjdk-17-jdk
+
+# Fedora
+sudo dnf install -y java-17-openjdk
 
 # Verificar
 java -version
@@ -114,7 +137,7 @@ java -version
 #### 6. Instalar Firebase CLI
 
 ```bash
-# Instalar Node.js primero (si no lo tienes)
+# Instalar Node.js (si no está instalado)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
@@ -130,22 +153,22 @@ firebase --version
 ```bash
 dart pub global activate flutterfire_cli
 
-# Agregar al PATH si no está
+# Agregar al PATH
 echo 'export PATH="$PATH:$HOME/.pub-cache/bin"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#### 8. Verificar entorno completo
+#### 8. Verificar el entorno
 
 ```bash
 flutter doctor -v
 ```
 
-Asegúrate de que todos los checks estén en verde ✅ antes de continuar.
+Asegúrate de que todos los checks estén en verde antes de continuar.
 
 ---
 
-### 🪟 Windows
+### Windows
 
 #### 1. Instalar Git
 
@@ -159,15 +182,15 @@ git --version
 #### 2. Instalar Flutter SDK
 
 ```powershell
-# Opción A: Con winget (recomendado, Windows 10/11)
+# Opción A: con winget (recomendado, Windows 10/11)
 winget install --id=Google.Flutter -e
-
-# Opción B: Manual
-# 1. Descarga el ZIP desde https://docs.flutter.dev/get-started/install/windows
-# 2. Extrae el contenido a C:\flutter
-# 3. Agrega C:\flutter\bin al PATH del sistema:
-#    Panel de Control > Variables de entorno > Path > Nuevo > C:\flutter\bin
 ```
+
+**Opción B — Manual:**
+1. Descarga el ZIP desde https://docs.flutter.dev/get-started/install/windows
+2. Extrae el contenido en `C:\flutter`
+3. Agrega `C:\flutter\bin` al PATH del sistema:
+   - Panel de Control → Variables de entorno → Path → Nuevo → `C:\flutter\bin`
 
 Verifica en una nueva terminal:
 ```powershell
@@ -177,17 +200,17 @@ flutter --version
 #### 3. Instalar Android Studio
 
 1. Descarga e instala Android Studio desde: https://developer.android.com/studio
-2. Durante la instalación, marca:
-   - ✅ Android SDK
-   - ✅ Android SDK Platform
-   - ✅ Android Virtual Device (AVD)
+2. Durante la instalación, selecciona:
+   - Android SDK
+   - Android SDK Platform
+   - Android Virtual Device (AVD)
 3. Abre Android Studio → SDK Manager → instala **Android SDK Platform 35** (o la más reciente).
 
 #### 4. Configurar variables de entorno de Android
 
 En PowerShell como Administrador:
 ```powershell
-# Establecer ANDROID_HOME (ajusta la ruta si es diferente)
+# Establecer ANDROID_HOME
 [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", "$env:LOCALAPPDATA\Android\Sdk", "User")
 
 # Agregar herramientas al PATH
@@ -238,7 +261,7 @@ $path = [System.Environment]::GetEnvironmentVariable("Path", "User")
 [System.Environment]::SetEnvironmentVariable("Path", "$path;$env:APPDATA\Pub\Cache\bin", "User")
 ```
 
-#### 9. Verificar entorno completo
+#### 9. Verificar el entorno
 
 ```powershell
 flutter doctor -v
@@ -246,9 +269,9 @@ flutter doctor -v
 
 ---
 
-## 📦 Clonar y Configurar el Proyecto
+## Configuración del Proyecto
 
-Una vez configurado el entorno, sigue estos pasos en **cualquier sistema operativo**:
+Una vez configurado el entorno, sigue estos pasos en cualquier sistema operativo.
 
 ### 1. Clonar el repositorio
 
@@ -265,40 +288,40 @@ flutter pub get
 
 ---
 
-## 🔥 Configuración completa de Firebase
+## Configuración de Firebase
 
-> ⚠️ Este paso es **obligatorio**. Sin él, la app no conectará con el backend.
+> **Importante:** Este paso es obligatorio. Sin él, la aplicación no podrá conectarse al backend.
 
 ### Paso 1 — Crear el proyecto en Firebase Console
 
-1. Ve a [https://console.firebase.google.com/](https://console.firebase.google.com/) e inicia sesión con tu cuenta de Google.
-2. Haz clic en **"Agregar proyecto"**.
+1. Ve a https://console.firebase.google.com e inicia sesión con tu cuenta de Google.
+2. Haz clic en **Agregar proyecto**.
 3. Escribe el nombre del proyecto (ej. `attune-app`) y haz clic en **Continuar**.
-4. Activa o desactiva Google Analytics según tu preferencia → **Crear proyecto**.
+4. Activa o desactiva Google Analytics según tu preferencia y haz clic en **Crear proyecto**.
 5. Espera a que el proyecto termine de crearse y haz clic en **Continuar**.
 
 ---
 
 ### Paso 2 — Habilitar Authentication
 
-Attune utiliza **Email/Password** y **Google Sign-In** como proveedores de autenticación.
+Attune utiliza **Email/Contraseña** y **Google Sign-In** como proveedores de autenticación.
 
-1. En la consola de Firebase, ve al menú lateral → **Authentication** → **Comenzar**.
-2. Abre la pestaña **"Método de inicio de sesión"**.
-3. Habilita los siguientes proveedores:
+1. En el menú lateral → **Authentication** → **Comenzar**.
+2. Abre la pestaña **Método de inicio de sesión**.
+3. Habilita los proveedores requeridos:
 
-   **Correo electrónico / Contraseña**
-   - Haz clic en el proveedor → activa la palanca → **Guardar**.
+**Correo electrónico / Contraseña**
+- Selecciona el proveedor → activa la palanca → **Guardar**.
 
-   **Google**
-   - Haz clic en Google → activa la palanca.
-   - Elige un correo de soporte del proyecto.
-   - Haz clic en **Guardar**.
+**Google**
+- Selecciona Google → activa la palanca.
+- Elige un correo de soporte del proyecto.
+- Haz clic en **Guardar**.
 
-   **Facebook** *(opcional — requiere app en Meta for Developers)*
-   - Haz clic en Facebook → activa la palanca.
-   - Ingresa el **App ID** y **App Secret** de tu app en Meta for Developers.
-   - Copia la URL de OAuth de Firebase y agrégala en tu app de Meta → **Guardar**.
+**Facebook** *(opcional — requiere app en Meta for Developers)*
+- Selecciona Facebook → activa la palanca.
+- Ingresa el App ID y App Secret de tu app en Meta for Developers.
+- Copia la URL de OAuth de Firebase y agrégala en tu app de Meta → **Guardar**.
 
 ---
 
@@ -306,88 +329,86 @@ Attune utiliza **Email/Password** y **Google Sign-In** como proveedores de auten
 
 1. En el menú lateral → **Firestore Database** → **Crear base de datos**.
 2. Elige el modo de inicio:
-   - **Modo de producción** (recomendado): las reglas empiezan denegando todo. Configura las reglas tú mismo.
+   - **Modo de producción** (recomendado): las reglas deniegan todo por defecto, debes configurarlas manualmente.
    - **Modo de prueba**: permite lectura/escritura pública durante 30 días (solo para desarrollo).
-3. Selecciona la **ubicación** del servidor más cercana a tus usuarios (ej. `us-central`, `southamerica-east1`).
+3. Selecciona la ubicación del servidor más cercana a tus usuarios (ej. `us-central`, `southamerica-east1`).
 4. Haz clic en **Habilitar**.
 
 ---
 
 ### Paso 4 — Registrar las aplicaciones en Firebase
 
-Debes registrar cada plataforma que uses (Android, Web, Windows).
+Debes registrar cada plataforma que vayas a utilizar.
 
-#### Android
+**Android**
 
-1. En la consola → ⚙️ Configuración del proyecto → **Agregar app** → ícono Android.
-2. **Nombre del paquete Android:** `com.example.attune`
-   *(puedes encontrarlo en `android/app/build.gradle` → `applicationId`)*
-3. Opcional: escribe un apodo para la app.
-4. Haz clic en **Registrar app**.
-5. **Descarga `google-services.json`** y colócalo en:
+1. En la consola → Configuración del proyecto → **Agregar app** → ícono Android.
+2. Nombre del paquete Android: `com.example.attune`
+   *(se encuentra en `android/app/build.gradle` en el campo `applicationId`)*
+3. Haz clic en **Registrar app**.
+4. Descarga `google-services.json` y colócalo en:
    ```
    android/app/google-services.json
    ```
-6. Haz clic en **Siguiente** → **Siguiente** → **Ir a la consola** (los SDK ya están en `pubspec.yaml`).
+5. Haz clic en **Siguiente** → **Siguiente** → **Ir a la consola** (los SDK ya están declarados en `pubspec.yaml`).
 
-#### Web / Windows
+**Web / Windows**
 
-1. En la consola → ⚙️ Configuración del proyecto → **Agregar app** → ícono Web (`</>`).
+1. En la consola → Configuración del proyecto → **Agregar app** → ícono Web (`</>`).
 2. Escribe un apodo (ej. `Attune Web`).
 3. Haz clic en **Registrar app**.
-4. Copia la configuración que aparece — la necesitarás si configuras Firebase manualmente.
+4. Conserva la configuración mostrada — la necesitarás si configuras Firebase de forma manual.
 5. Haz clic en **Ir a la consola**.
 
 ---
 
 ### Paso 5 — Configurar Firebase en el código (FlutterFire CLI)
 
-Este es el método recomendado. Genera automáticamente `lib/firebase_options.dart`.
+Este es el método recomendado. Genera automáticamente el archivo `lib/firebase_options.dart`.
 
 ```bash
-# 1. Inicia sesión en Firebase desde la terminal
+# 1. Iniciar sesión en Firebase
 firebase login
 
-# 2. Dentro de la raíz del proyecto Attune, ejecuta:
+# 2. Ejecutar desde la raíz del proyecto
 flutterfire configure
 
-# 3. Selecciona tu proyecto de la lista (ej. attune-app-3ea44)
-# 4. Marca con barra espaciadora las plataformas que quieres configurar:
+# 3. Seleccionar el proyecto de la lista (ej. attune-app-3ea44)
+# 4. Marcar con barra espaciadora las plataformas a configurar:
 #      [x] android
 #      [x] web
 #      [x] windows
-# 5. Presiona Enter — el CLI genera los archivos automáticamente
+# 5. Presionar Enter — el CLI genera los archivos automáticamente
 ```
 
-**Archivos que se generan / actualizan:**
+**Archivos generados o actualizados:**
 
 | Archivo | Ubicación | Descripción |
 |---------|-----------|-------------|
 | `firebase_options.dart` | `lib/` | Claves de conexión por plataforma |
-| `google-services.json` | `android/app/` | Credenciales Android |
-| `firebase.json` | raíz del proyecto | Configuración del proyecto Firebase |
+| `google-services.json` | `android/app/` | Credenciales para Android |
+| `firebase.json` | raíz del proyecto | Configuración general del proyecto Firebase |
 
-> Si ya tienes el `google-services.json` descargado del Paso 4, el CLI lo sobreescribirá correctamente. No los mezcles manualmente.
-
----
-
-### Paso 6 — Habilitar Firebase Cloud Messaging (FCM)
-
-Attune usa FCM para notificaciones push. No requiere configuración adicional en la consola para Android, pero asegúrate de:
-
-1. En la consola → **Messaging** → confirma que el servicio está activo.
-2. En Android, el `google-services.json` ya incluye las claves de FCM.
-3. En el código, el handler de fondo ya está registrado en `main.dart`:
-   ```dart
-   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-   await NotificationService.initialize();
-   ```
+> Si ya descargaste `google-services.json` en el Paso 4, el CLI lo sobreescribirá correctamente. No combines ambos métodos manualmente.
 
 ---
 
-### Paso 7 — Configurar las reglas de Firestore
+### Paso 6 — Firebase Cloud Messaging (FCM)
 
-Las reglas actuales del proyecto (`firestore.rules`) permiten lectura y escritura a cualquier usuario autenticado:
+Attune usa FCM para notificaciones push. No se requiere configuración adicional en la consola para Android. El handler ya está registrado en `main.dart`:
+
+```dart
+FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+await NotificationService.initialize();
+```
+
+Verifica en la consola que el servicio **Messaging** esté activo para tu proyecto.
+
+---
+
+### Paso 7 — Reglas de Firestore
+
+Las reglas de seguridad del proyecto (`firestore.rules`) permiten acceso completo a usuarios autenticados:
 
 ```js
 rules_version = '2';
@@ -398,7 +419,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Acceso completo solo a usuarios autenticados
     match /{path=**} {
       allow read, write: if isSignedIn();
     }
@@ -406,85 +426,82 @@ service cloud.firestore {
 }
 ```
 
-Para **desplegar las reglas** a Firebase:
+Para desplegar las reglas a Firebase:
 
 ```bash
-# Asegúrate de estar en la raíz del proyecto
+# Desde la raíz del proyecto
 firebase deploy --only firestore:rules
 
-# Para desplegar solo las reglas de un proyecto específico:
+# Especificando el proyecto
 firebase deploy --only firestore:rules --project attune-app-3ea44
 ```
 
-Para **verificar las reglas** en la consola:
-- Ve a **Firestore Database** → pestaña **"Reglas"**.
+Para verificar las reglas activas en la consola:
+- Firestore Database → pestaña **Reglas**
 
 ---
 
-### Paso 8 — Verificar que Firebase funciona
+### Paso 8 — Verificar la conexión con Firebase
 
 ```bash
-# Ejecuta la app y verifica los logs de conexión
+# Ejecutar la app
 flutter run
 
-# Si ves este log en consola, Firebase está conectado correctamente:
+# Si Firebase está correctamente inicializado, verás en consola:
 # [Firebase] Firebase initialized successfully
 ```
 
-Si hay errores de conexión, verifica:
-- Que `google-services.json` está en `android/app/`
-- Que `lib/firebase_options.dart` existe y tiene el `projectId` correcto (`attune-app-3ea44`)
-- Que el `applicationId` en `android/app/build.gradle` coincide con el registrado en Firebase Console
+Si hay errores de conexión, verifica lo siguiente:
+
+- `google-services.json` está ubicado en `android/app/`
+- `lib/firebase_options.dart` existe y contiene el `projectId` correcto (`attune-app-3ea44`)
+- El `applicationId` en `android/app/build.gradle` coincide con el registrado en Firebase Console
 
 ---
 
-### 3. Habilitar un dispositivo de ejecución
+## Ejecución
 
 ```bash
-# Ver dispositivos disponibles
+# Listar dispositivos disponibles
 flutter devices
 
-# Iniciar emulador Android (si tienes AVD configurado)
+# Iniciar emulador Android (si tienes un AVD configurado)
 flutter emulators --launch <nombre_del_emulador>
 
-# O ejecutar en Chrome (modo web)
+# Ejecutar en el dispositivo detectado automáticamente
+flutter run
+
+# Ejecutar en modo release
+flutter run --release
+
+# Ejecutar en un dispositivo específico
+flutter run -d <device_id>
+
+# Ejecutar en navegador (modo web)
 flutter run -d chrome
 ```
 
-### 4. Ejecutar el proyecto
-
-```bash
-# Ejecutar en el dispositivo/emulador detectado automáticamente
-flutter run
-
-# Ejecutar en modo release (más rápido, sin debug)
-flutter run --release
-
-# Ejecutar especificando dispositivo
-flutter run -d <device_id>
-```
-
 ---
 
-## 🧪 Ejecutar pruebas
+## Pruebas
 
 ```bash
 # Ejecutar todas las pruebas
 flutter test
 
-# Ejecutar pruebas con cobertura
+# Ejecutar pruebas con reporte de cobertura
 flutter test --coverage
 ```
 
 ---
 
-## 🏗 Compilar para producción
+## Compilación para Producción
 
 ```bash
-# Android (APK)
+# Android — APK
 flutter build apk --release
 
-# Android (App Bundle para Play Store)
+# Android — App Bundle (para Google Play Store)
 flutter build appbundle --release
 
 # Web
@@ -499,17 +516,17 @@ flutter build linux --release
 
 ---
 
-## 🛠 Solución de problemas comunes
+## Solución de Problemas
 
-| Problema | Solución |
-|----------|----------|
+| Error | Solución |
+|-------|----------|
 | `flutter: command not found` | Verifica que Flutter está en el PATH y reinicia la terminal |
 | `Android license status unknown` | Ejecuta `flutter doctor --android-licenses` |
-| `Firebase not initialized` | Asegúrate de haber corrido `flutterfire configure` o colocado `google-services.json` |
-| `Gradle build failed` | Verifica que tienes JDK 17 instalado y `JAVA_HOME` configurado |
+| `Firebase not initialized` | Verifica que `flutterfire configure` fue ejecutado o que `google-services.json` está en su lugar |
+| `Gradle build failed` | Verifica que JDK 17 está instalado y que `JAVA_HOME` está configurado |
 | `No devices available` | Conecta un dispositivo físico o inicia un emulador con `flutter emulators` |
-| `pub get failed` | Verifica tu conexión a internet y corre `flutter clean && flutter pub get` |
+| `pub get failed` | Verifica tu conexión a internet y ejecuta `flutter clean && flutter pub get` |
 
 ---
 
-*Para reportar bugs o contribuir al proyecto, abre un Issue o Pull Request en el repositorio.*
+Para reportar errores o contribuir al proyecto, abre un Issue o Pull Request en el repositorio.

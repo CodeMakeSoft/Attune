@@ -8,6 +8,7 @@ import 'package:attune/features/5_team/presentation/screens/team_screen.dart';
 import 'package:attune/core/services/firestore_service.dart';
 import 'package:attune/core/models/user_model.dart' as model;
 import 'package:attune/core/widgets/loading_screen.dart';
+import 'package:attune/core/services/notification_service.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,6 +19,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  bool _tokenUpdated = false;
   final FirestoreService _firestoreService = FirestoreService();
 
   @override
@@ -83,6 +85,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
         final currentUser = snapshot.data!;
         debugPrint("--- Navegación: Usuario cargado -> ${currentUser.name} (Rol: ${currentUser.role}) ---");
+
+        // Al cargar el usuario, intentamos actualizar el token de notificaciones una sola vez
+        if (!_tokenUpdated) {
+          _updateFCMToken(currentUser.uid);
+          _tokenUpdated = true;
+        }
 
         final List<Widget> pages = [
           DashboardScreen(currentUser: currentUser),
@@ -153,5 +161,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _updateFCMToken(String userId) async {
+    try {
+      String? token = await NotificationService.getToken();
+      if (token != null) {
+        await _firestoreService.updateUserFields(userId, {'fcmToken': token});
+        debugPrint("--- FCM Token actualizado en Firestore ---");
+      }
+    } catch (e) {
+      debugPrint("--- Error al actualizar FCM Token: $e ---");
+    }
   }
 }

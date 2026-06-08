@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:attune/app/auth_gate.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:attune/core/services/notification_service.dart';
 
 // Keys for Firestone
 import 'firebase_options.dart';
@@ -19,6 +21,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Background Message Handler (FCM)
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Notification Service Initialization
+  await NotificationService.initialize();
 
   runApp(const MyApp());
 }
